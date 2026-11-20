@@ -1,0 +1,59 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ARC CORE 見本</title>
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap">
+<style>
+:root{--bg:#02060c;--c:#5fd4ff;--c2:#b8ecff;--dim:#2a6a8a;--fg:#e4f6ff;--mut:#7aa3b8;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:radial-gradient(circle at 50% 42%,#0a2236 0,#02060c 62%);color:var(--fg);font-family:"Zen Kaku Gothic New",system-ui,sans-serif;overflow-x:hidden}
+.wrap{min-height:100vh;display:grid;grid-template-rows:auto 1fr auto;padding:max(18px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));gap:10px}
+.top{display:flex;justify-content:space-between;align-items:center;font-family:Orbitron,sans-serif;letter-spacing:.3em;font-size:12px;color:var(--mut)}
+.top b{color:var(--c2);font-size:16px;text-shadow:0 0 12px var(--c)}
+.stage{position:relative;width:min(92vw,520px);aspect-ratio:1;margin:0 auto;align-self:center}
+canvas{position:absolute;inset:0;width:100%;height:100%}
+.core{position:absolute;inset:0;display:grid;place-content:center;text-align:center;pointer-events:none}
+.core .t{font-family:Orbitron,sans-serif;font-weight:700;font-size:clamp(26px,8vw,44px);letter-spacing:.06em;color:#fff;text-shadow:0 0 18px var(--c),0 0 40px var(--c)}
+.core .d{font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:.2em;color:var(--c2);margin-top:4px}
+.core .s{font-size:12px;color:var(--mut);margin-top:10px}
+.node{position:absolute;width:21%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;display:grid;place-content:center;text-align:center;gap:2px;
+  background:radial-gradient(circle,rgba(95,212,255,.18),rgba(2,6,12,.85) 70%);border:1px solid rgba(95,212,255,.55);color:var(--fg);text-decoration:none;
+  box-shadow:0 0 14px rgba(95,212,255,.35),inset 0 0 12px rgba(95,212,255,.25);font-size:clamp(11px,3vw,14px);font-weight:700;transition:transform .2s,box-shadow .2s}
+.node small{font-family:Orbitron,sans-serif;font-size:clamp(7px,1.9vw,9px);letter-spacing:.15em;color:var(--c);font-weight:500}
+.node:hover{transform:translate(-50%,-50%) scale(1.08);box-shadow:0 0 26px rgba(95,212,255,.7),inset 0 0 16px rgba(95,212,255,.4)}
+.say{padding-right:80px;padding-left:8px;text-align:center;color:var(--c2);font-size:14px}
+.nu{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));width:68px;height:68px;border-radius:50%;overflow:hidden;border:2px solid var(--c);box-shadow:0 0 20px var(--c)}
+.nu img{width:100%;height:100%;object-fit:cover}
+.hop{animation:hop .7s}@keyframes hop{30%{transform:translateY(-18px)}60%{transform:none}}
+.back{color:var(--mut);font-size:13px;text-decoration:none;border:1px solid var(--dim);border-radius:999px;padding:6px 12px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style></head><body>
+<div class="wrap">
+  <div class="top"><b>FINERI</b><a class="back" href="./">← 見本一覧</a></div>
+  <div class="stage" id="stage">
+    <canvas id="cv"></canvas>
+    <div class="core"><div class="t" data-time>--:--:--</div><div class="d" data-date></div><div class="s">SYSTEM ONLINE</div></div>
+  </div>
+  <div class="say">「……なに？ 呼んだなら、どれか選んで」</div>
+</div>
+<div class="nu"><img src="../nu.jpg" alt="ぬーちゃん"></div>
+<script>
+const items=[['COMMS','無名'],['MARKET','相場'],['KEIBA','競馬'],['TASKS','やること'],['MEMORY','記憶庫'],['FOREST','森']];
+const st=document.getElementById('stage');
+items.forEach((it,i)=>{const a=Math.PI*2*i/items.length-Math.PI/2;const el=document.createElement('a');el.className='node';el.href='#';
+  el.style.left=(50+39*Math.cos(a))+'%';el.style.top=(50+39*Math.sin(a))+'%';el.innerHTML='<small>'+it[0]+'</small>'+it[1];st.append(el);});
+const cv=document.getElementById('cv'),cx=cv.getContext('2d');const red=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function size(){const r=st.getBoundingClientRect(),dpr=devicePixelRatio||1;cv.width=r.width*dpr;cv.height=r.height*dpr;}
+size();addEventListener('resize',size);
+function draw(t){const W=cv.width,c=W/2,u=W/520;cx.clearRect(0,0,W,W);cx.lineCap='round';
+  const g=cx.createRadialGradient(c,c,0,c,c,120*u);g.addColorStop(0,'rgba(140,225,255,.35)');g.addColorStop(1,'rgba(95,212,255,0)');cx.fillStyle=g;cx.beginPath();cx.arc(c,c,120*u,0,7);cx.fill();
+  const ring=(r,w,a0,len,n,sp,al)=>{cx.lineWidth=w*u;cx.strokeStyle='rgba(95,212,255,'+al+')';cx.shadowColor='#5fd4ff';cx.shadowBlur=12*u;
+    for(let k=0;k<n;k++){const s=a0+t*sp+k*Math.PI*2/n;cx.beginPath();cx.arc(c,c,r*u,s,s+len);cx.stroke();}};
+  ring(132,6,0,Math.PI*2/10*.8,10,.0003,.9);
+  ring(148,2,0,Math.PI*2*.3,3,-.0005,.7);
+  ring(112,2,0,Math.PI*2/40*.5,40,.0002,.5);
+  ring(160,1,0,Math.PI*2,1,0,.25);
+  cx.shadowBlur=0;cx.strokeStyle='rgba(95,212,255,.35)';cx.lineWidth=1*u;
+  for(let k=0;k<72;k++){const a=k*Math.PI/36;const r1=168*u,r2=(k%6?173:180)*u;cx.beginPath();cx.moveTo(c+r1*Math.cos(a),c+r1*Math.sin(a));cx.lineTo(c+r2*Math.cos(a),c+r2*Math.sin(a));cx.stroke();}
+  if(!red)requestAnimationFrame(draw);}
+requestAnimationFrame(draw);
+</script><script src="common.js"></script></body></html>

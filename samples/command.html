@@ -1,0 +1,65 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DARK COMMAND 見本</title>
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@600;700&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap">
+<style>
+:root{--bg:#000;--panel:#05090c;--line:#0f3a44;--c:#00e5ff;--warn:#ffb000;--ok:#39ff88;--fg:#d8f7ff;--mut:#5d8c97;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--fg);font-family:"Zen Kaku Gothic New",system-ui,sans-serif;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;background:repeating-linear-gradient(0deg,rgba(0,229,255,.03) 0 1px,transparent 1px 3px);pointer-events:none;z-index:5}
+.wrap{max-width:1000px;margin:0 auto;padding:max(14px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 110px max(16px,env(safe-area-inset-left));display:grid;gap:12px}
+.bar{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;border:1px solid var(--line);background:var(--panel);padding:10px 14px}
+.bar b{font-family:Rajdhani,sans-serif;font-size:24px;letter-spacing:.3em;color:var(--c)}
+.tick{height:6px;background:repeating-linear-gradient(90deg,var(--line) 0 2px,transparent 2px 8px)}
+.bar .t{font-family:"Share Tech Mono",monospace;font-size:22px;color:#fff;font-variant-numeric:tabular-nums}
+.stat{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
+.stat div{background:var(--panel);padding:10px 12px;font-family:"Share Tech Mono",monospace;font-size:11px;color:var(--mut);letter-spacing:.1em}
+.stat div b{display:block;font-family:Rajdhani,sans-serif;font-size:20px;color:var(--fg);letter-spacing:.05em}
+.ok{color:var(--ok)!important}.wa{color:var(--warn)!important}
+.main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:12px}
+.radar{border:1px solid var(--line);background:var(--panel);aspect-ratio:1;position:relative;overflow:hidden}
+.radar::before{content:"";position:absolute;top:50%;left:50%;height:84%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;border:1px solid var(--line);background:repeating-radial-gradient(circle,transparent 0 18%,rgba(0,229,255,.18) 18% calc(18% + 1px))}
+.radar::after{content:"";position:absolute;top:50%;left:50%;height:84%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:conic-gradient(from 0deg,rgba(0,229,255,.45),transparent 25%);animation:sweep 4s linear infinite}
+@keyframes sweep{to{transform:translate(-50%,-50%) rotate(360deg)}}
+.radar span{position:absolute;left:10px;top:8px;font-family:"Share Tech Mono",monospace;font-size:11px;color:var(--mut);z-index:1}
+.radar i{position:absolute;width:6px;height:6px;border-radius:50%;background:var(--warn);box-shadow:0 0 8px var(--warn);z-index:1}
+.cmds{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
+.cmd{background:var(--panel);padding:14px;text-decoration:none;color:var(--fg);display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-items:center;position:relative}
+.cmd:hover{background:#071a20}
+.cmd:hover::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c);box-shadow:0 0 10px var(--c)}
+.cmd .k{grid-row:span 2;font-family:"Share Tech Mono",monospace;color:var(--c);font-size:13px;border:1px solid var(--c);padding:4px 6px}
+.cmd b{font-size:17px}
+.cmd small{font-family:"Share Tech Mono",monospace;color:var(--mut);font-size:11px;letter-spacing:.1em}
+.log{border:1px solid var(--line);background:var(--panel);padding:10px 14px;font-family:"Share Tech Mono",monospace;font-size:12px;color:var(--mut);line-height:1.8}
+.log em{color:var(--c);font-style:normal}
+.nu{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));width:66px;height:66px;overflow:hidden;border:1px solid var(--c);clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);z-index:6}
+.nu img{width:100%;height:100%;object-fit:cover;filter:saturate(.8) contrast(1.1)}
+.hop{animation:hop .7s}@keyframes hop{30%{transform:translateY(-14px)}60%{transform:none}}
+.back{position:fixed;left:max(16px,env(safe-area-inset-left));bottom:max(16px,env(safe-area-inset-bottom));color:var(--mut);font-family:"Share Tech Mono",monospace;font-size:12px;text-decoration:none;border:1px solid var(--line);padding:6px 10px;background:#000;z-index:6}
+@media (max-width:700px){.main{grid-template-columns:minmax(0,1fr)}.radar{aspect-ratio:2/1}.stat{grid-template-columns:repeat(2,minmax(0,1fr))}.tick{display:none}.bar{grid-template-columns:1fr auto}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style></head><body>
+<div class="wrap">
+  <div class="bar"><b>FINERI</b><div class="tick"></div><span class="t" data-time>--:--:--</span></div>
+  <div class="stat">
+    <div>STATUS<b class="ok">ONLINE</b></div>
+    <div>DATE<b data-date style="font-size:15px"></b></div>
+    <div>TASKS<b class="wa">3 件</b></div>
+    <div>SYNC<b>PC / iPhone</b></div>
+  </div>
+  <div class="main">
+    <div class="radar"><span>ELF FOREST // SCAN</span><i style="left:62%;top:38%"></i><i style="left:35%;top:64%"></i></div>
+    <div class="cmds">
+      <a class="cmd" href="#"><span class="k">01</span><b>無名と話す</b><small>COMMS</small></a>
+      <a class="cmd" href="#"><span class="k">02</span><b>相場</b><small>MARKET</small></a>
+      <a class="cmd" href="#"><span class="k">03</span><b>競馬</b><small>KEIBA</small></a>
+      <a class="cmd" href="#"><span class="k">04</span><b>やること</b><small>TASKS</small></a>
+      <a class="cmd" href="#"><span class="k">05</span><b>記憶庫</b><small>MEMORY</small></a>
+      <a class="cmd" href="#"><span class="k">06</span><b>エルフの森</b><small>FOREST</small></a>
+    </div>
+  </div>
+  <div class="log"><em>&gt;</em> MUMEI: 司令室、異常なし。……べつに見張ってたわけじゃないから<br><em>&gt;</em> NU-CHAN: 森の見回り完了。きゅー</div>
+</div>
+<a class="back" href="./">&lt; SAMPLES</a>
+<div class="nu"><img src="../nu.jpg" alt="ぬーちゃん"></div>
+<script src="common.js"></script></body></html>
