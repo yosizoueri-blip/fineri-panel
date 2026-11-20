@@ -243,6 +243,13 @@ a.big { display: inline-flex; align-items: center; justify-content: center; min-
 a.big.alt { background: rgba(255,255,255,0.08); color: var(--fg); border: 1px solid var(--edge); box-shadow: none; font-size: 15px; min-height: 46px; }
 .asks a { display: inline-flex; align-items: center; min-height: 38px; padding: 0 14px; border-radius: 12px; font-size: 13px; color: var(--fg); text-decoration: none; background: rgba(255,255,255,0.06); border: 1px solid var(--edge); }
 .asks a:hover { background: rgba(127,224,255,0.16); }
+.hdr-right { display: grid; gap: 8px; justify-items: end; }
+.sys { display: flex; gap: 6px; }
+.sysbtn { min-height: 28px; padding: 0 10px; font-size: 12px; font-family: var(--font-hud); letter-spacing: 0.08em; border-radius: 999px; background: rgba(255,255,255,0.08); color: var(--cyan-soft); border: 1px solid var(--edge); box-shadow: none; }
+.sysbtn:hover { background: rgba(127,224,255,0.2); }
+.log-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.log-list ul { margin: 0; padding-left: 1.2em; color: var(--muted); font-size: 14px; }
+@media (max-width: 420px) { .hdr-right { justify-items: start; } }
 </style>
 </head>
 <body>
@@ -262,9 +269,15 @@ a.big.alt { background: rgba(255,255,255,0.08); color: var(--fg); border: 1px so
       <h1>FINERI</h1>
       <div class="sub"><span class="dot"></span><span class="label" style="color:var(--green)">Online</span><span class="label">／ エルフの森</span></div>
     </div>
+    <div class="hdr-right">
+    <div class="sys">
+      <button class="sysbtn" type="button" data-open="updates" aria-label="更新履歴を開く">v<span id="ver"></span></button>
+      <button class="sysbtn" type="button" id="refreshBtn" aria-label="最新にする">↻ 更新</button>
+    </div>
     <div class="clock">
       <div class="time" id="time">--:--:--</div>
       <div class="date" id="date">----.--.--</div>
+    </div>
     </div>
   </header>
 
@@ -367,6 +380,14 @@ a.big.alt { background: rgba(255,255,255,0.08); color: var(--fg); border: 1px so
       </div>
     </div>
 
+    <div class="mod" data-mod="updates" hidden>
+      <div class="row" style="margin-bottom:14px">
+        <button type="button" id="refreshBtn2">↻ 最新にする</button>
+        <span class="hint">今のバージョン: v<span id="ver2"></span></span>
+      </div>
+      <ul class="log-list" id="changelog"></ul>
+    </div>
+
     <div class="mod" data-mod="forest" hidden>
       <div class="crew">
         <div class="card"><img src="nu.jpg" alt="ぬーちゃん（チビ姿）"><h3>ぬーちゃん</h3><p>白い狐の霊獣。ふだんはチビ姿</p></div>
@@ -405,7 +426,7 @@ a.big.alt { background: rgba(255,255,255,0.08); color: var(--fg); border: 1px so
     h < 11 ? 'おはよ、fineri。' : h < 18 ? 'おかえり、fineri。' : 'おつかれ、fineri。';
 
   const sheet = document.getElementById('sheet'), veil = document.getElementById('veil');
-  const titles = { talk: ['COMMS', '無名と話す'], market: ['MARKET', '相場'], keiba: ['KEIBA', '競馬'], tasks: ['TASKS', 'やること'], memory: ['MEMORY', '記憶庫'], forest: ['FOREST', 'エルフの森'] };
+  const titles = { talk: ['COMMS', '無名と話す'], market: ['MARKET', '相場'], keiba: ['KEIBA', '競馬'], tasks: ['TASKS', 'やること'], memory: ['MEMORY', '記憶庫'], forest: ['FOREST', 'エルフの森'], updates: ['UPDATES', '更新履歴'] };
   let lastTile = null;
   function openMod(name, from) {
     lastTile = from || null;
@@ -478,6 +499,34 @@ a.big.alt { background: rgba(255,255,255,0.08); color: var(--fg); border: 1px so
     }, 3600);
   });
   setTimeout(() => say('きゅー！ ボタンを押してね'), 1200);
+
+
+  // version + changelog (newest first)
+  const CHANGELOG = [
+    { v: '1.2', d: '2026-11-21', items: ['右上に「↻ 更新」ボタンを追加', '更新履歴（このページ）を追加'] },
+    { v: '1.1', d: '2026-11-21', items: ['「無名と話す」に「いつもの部屋で話す」を追加（プロジェクトに直接飛ぶ）', 'アプリが古い画面のままにならないよう修正'] },
+    { v: '1.0', d: '2026-11-21', items: ['FINERI パネル誕生。ホーム画面からアプリとして使えるように', 'ガラス風デザイン、夜のエルフの森、ぬーちゃん'] }
+  ];
+  document.getElementById('ver').textContent = CHANGELOG[0].v;
+  document.getElementById('ver2').textContent = CHANGELOG[0].v;
+  const cl = document.getElementById('changelog');
+  CHANGELOG.forEach(e => {
+    const li = document.createElement('li'); li.className = 'card';
+    const h = document.createElement('h3'); h.textContent = 'v' + e.v + '　' + e.d;
+    const ul = document.createElement('ul');
+    e.items.forEach(t => { const x = document.createElement('li'); x.textContent = t; ul.append(x); });
+    li.append(h, ul); cl.append(li);
+  });
+  async function hardRefresh(btn) {
+    btn.disabled = true; btn.textContent = '更新中…';
+    try {
+      if ('caches' in window) { const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); }
+      if (navigator.serviceWorker) { const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(r => r.update().catch(() => {}))); }
+    } catch (e) {}
+    location.replace(location.pathname + '?r=' + Date.now());
+  }
+  document.getElementById('refreshBtn').addEventListener('click', e => hardRefresh(e.currentTarget));
+  document.getElementById('refreshBtn2').addEventListener('click', e => hardRefresh(e.currentTarget));
 
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 })();
