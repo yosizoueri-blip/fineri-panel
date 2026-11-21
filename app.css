@@ -336,3 +336,23 @@ body.glitching .app, body.glitching .sheet.open { transform: translateX(var(--gx
 body.eyes-shut .backdrop .face.shut { opacity: .62; }
 .backdrop .face:not(.shut) { transition: opacity 1.6s ease; }
 body.eyes-shut .backdrop .face:not(.shut) { opacity: 0; }
+
+/* v3.22: phone held sideways — core in the middle, data on the left, clock and dock on the right */
+@media (orientation: landscape) and (max-height: 600px) {
+  .app { max-width: none; min-height: 0; gap: 6px; padding-block: 6px;
+    display: grid !important; grid-template-columns: minmax(0, 1fr) calc(100dvh - 64px) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto auto; }
+  .head { grid-column: 1 / -1; }
+  .sky { position: absolute; left: max(14px, env(safe-area-inset-left, 0px)); top: 48px; width: calc((100% - 100dvh) / 2); height: 40%; margin: 0; }
+  .sky #sky { display: none; }
+  .nu { display: none; }
+  .mid { grid-column: 2; grid-row: 2 / 5; margin-top: 0; }
+  .info { grid-column: 3; grid-row: 3; }
+  .dock { grid-column: 3; grid-row: 4; grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 6px; padding-top: 10px; }
+  .dp-mkt, .dp-race, .dp-tel { width: max-content; }
+  .dp { font-size: 10.5px; } .dp-h { font-size: 9px; } .dp .sp { width: 40px; height: 10px; } .dp .row b { min-width: 50px; }
+  .dp-mkt { left: auto; right: calc(100% + 18px); top: 44%; }
+  .dp-race { left: auto; right: calc(100% + 18px); bottom: 0; max-width: none; }
+  .dp-tel { right: auto; left: calc(100% + 18px); top: -2%; }
+  .dp-hex { display: none; }
+  .info .t { font-size: 26px; }
+}
