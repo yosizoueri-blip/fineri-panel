@@ -1,8 +1,12 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '2.3';
+  const VERSION = '2.4';
   const CHANGELOG = [
+    { v: '2.4', d: '2026-11-21', items: [
+      '斜めに浮かぶデータパネルを追加（英語だけ）：相場 BTC／N225／KIOXIA／SPACEX、来週の重賞、動くテレメトリ',
+      '左上の4つと日付もデータパネルに',
+      '下地の絵をもっと濃く。肌のところは少し透けるように'] },
     { v: '2.3', d: '2026-11-21', items: ['下地の絵を濃くして、はっきり見えるように'] },
     { v: '2.2', d: '2026-11-21', items: [
       '地球を下へ移動。ボタンの下で回る、軌道リングつき',
@@ -42,6 +46,7 @@
     $('time').textContent = pad(n.getUTCHours()) + ':' + pad(n.getUTCMinutes()) + ':' + pad(n.getUTCSeconds());
     $('date').textContent = n.getUTCFullYear() + '.' + pad(n.getUTCMonth() + 1) + '.' + pad(n.getUTCDate()) + ' (' + DAYS[n.getUTCDay()] + ')';
     nuClock(n);
+    $('sDate').textContent = n.getUTCFullYear() + '.' + pad(n.getUTCMonth() + 1) + '.' + pad(n.getUTCDate()) + ' ' + ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][n.getUTCDay()];
   }
 
   /* ---------- tone ---------- */
@@ -184,7 +189,7 @@
     const age = moonAge(Date.now()), transit = 12 + age * 24 / 29.530588853;
     let mf = ((hr - (transit - 6.2)) % 24 + 24) % 24 / 12.4;
     const full = Math.abs(age - 14.77) < 1.0;
-    $('stSky').textContent = full ? '満月' : '月齢 ' + age.toFixed(1);
+    $('stSky').textContent = full ? 'FULL MOON' : 'MOON ' + age.toFixed(1);
     if (mf > 0 && mf < 1) {
       const x = arcX(mf), y = arcY(mf), r = 11 * d;
       const glow = full ? 'rgba(255,60,70,' : 'rgba(200,225,255,';
@@ -409,6 +414,7 @@
       const j = await r.json(); const p = j.prices; const last = p[p.length - 1]; const target = last[0] - 3600e3;
       let prev = p[0]; for (const q of p) { if (q[0] <= target) prev = q; else break; }
       const pct = (last[1] / prev[1] - 1) * 100; signal.btc = pct; show('iBtc', 'mBtc', 'mBtcC', last[1], pct, '¥');
+      const sp = p.slice(-72).filter((_, i) => i % 3 === 0).map(q => q[1]); dq('qBTC', '¥' + (last[1] / 1e6).toFixed(2) + 'M', pct, sp);
     } catch (e) { $('iBtc').textContent = '取得できず'; }
   }
   async function nikkei() {
@@ -417,13 +423,52 @@
       const j = await r.json(); const n = j.nikkei; if (!n || !n.price) throw 0;
       signal.nk = n.age_min <= 90 ? n.change_1h : 0;
       show('iNk', 'mNk', 'mNkC', n.price, n.change_1h, '');
+      dq('qN225', Math.round(n.price).toLocaleString('en-US'), n.change_1h, n.spark, n.market_open === false);
+      const k = j.kioxia; if (k && k.price) dq('qKIOX', '¥' + Math.round(k.price).toLocaleString('en-US'), k.change_1h, k.spark, k.market_open === false);
+      const x = j.spacex; if (x && x.price) dq('qSPX', '$' + x.price.toFixed(2), x.change_1h, x.spark, x.market_open === false); else dq('qSPX', 'PRE-IPO', null, null);
       if (n.market_open === false) { const s = document.createElement('span'); s.textContent = ' 休場'; s.style.color = 'var(--mut)'; $('iNk').append(s); }
     } catch (e) { $('iNk').textContent = '準備中'; }
   }
+  function dq(id, price, pct, spark, closed) {
+    const row = $(id); if (!row) return;
+    row.querySelector('.p').textContent = price;
+    const c = row.querySelector('.c');
+    if (pct === null || pct === undefined) { c.textContent = '—'; c.className = 'c'; }
+    else { c.textContent = (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%' + (closed ? ' CL' : ''); c.className = 'c ' + (pct >= 0 ? 'up' : 'down'); }
+    const pl = row.querySelector('polyline');
+    if (spark && spark.length > 1) { const lo = Math.min(...spark), hi = Math.max(...spark), r = hi - lo || 1;
+      pl.setAttribute('points', spark.map((v, i) => (i / (spark.length - 1) * 40).toFixed(1) + ',' + (9.5 - (v - lo) / r * 9).toFixed(1)).join(' ')); }
+    else pl.setAttribute('points', '0,5 40,5');
+  }
+  /* races: graded races of the coming week (next Monday → Sunday) */
+  fetch('races.json', { cache: 'no-store' }).then(r => r.json()).then(j => {
+    const n = jst(), day = n.getUTCDay(), today = Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate());
+    const mon = today + ((8 - day) % 7 || 7) * 864e5, sun = mon + 6 * 864e5;
+    let list = j.races.filter(r => { const t = Date.parse(r.date); return t >= mon && t <= sun; });
+    if (!list.length) list = j.races.filter(r => Date.parse(r.date) >= today).slice(0, 3);
+    const box = $('raceList'); box.innerHTML = '';
+    list.slice(0, 4).forEach(r => { const d = new Date(Date.parse(r.date)), row = document.createElement('div'); row.className = 'row';
+      row.innerHTML = '<span class="g' + r.grade.slice(1) + '"></span><b></b><span class="n"></span>';
+      row.children[0].textContent = r.grade; row.children[1].textContent = pad(d.getUTCMonth() + 1) + '.' + pad(d.getUTCDate()); row.children[2].textContent = r.name;
+      row.children[1].style.minWidth = '30px'; row.title = r.course; box.append(row); });
+  }).catch(() => {});
+  /* meaningless-but-alive telemetry */
+  const bars = $('tBars'); for (let i = 0; i < 14; i++) bars.append(document.createElement('i'));
+  const hexBox = $('hexList'), boot = Date.now(), hex = () => Math.floor(Math.random() * 0xffff).toString(16).toUpperCase().padStart(4, '0');
+  for (let i = 0; i < 4; i++) { const r = document.createElement('div'); r.className = 'row'; hexBox.append(r); }
+  function telemetry() {
+    $('tFlux').textContent = (97 + Math.random() * 2.9).toFixed(2) + ' %';
+    $('tSyn').textContent = (pulses.length * 3.7 + Math.random() * 4).toFixed(1) + ' Hz';
+    const s = ((Date.now() - boot) / 1000) | 0; $('tUp').textContent = pad((s / 3600) | 0) + ':' + pad(((s / 60) | 0) % 60) + ':' + pad(s % 60);
+    bars.querySelectorAll('i').forEach(b => b.style.height = (2 + Math.random() * 12) + 'px');
+    const rows = hexBox.children; for (let i = rows.length - 1; i > 0; i--) rows[i].textContent = rows[i - 1].textContent;
+    rows[0].textContent = hex() + ' ' + hex() + ' ' + hex();
+  }
+  telemetry(); setInterval(telemetry, reduce ? 5000 : 700);
   btc(); nikkei(); setInterval(btc, 5 * 60e3); setInterval(nikkei, 5 * 60e3);
 
   /* ---------- boot ---------- */
-  fetch('graph.json', { cache: 'no-store' }).then(r => r.json()).then(g => { GRAPH = g; layout(); $('stMem').textContent = g.n + ' NOTES / ' + g.e.length + ' LINKS'; }).catch(() => { $('stMem').textContent = '-'; });
+  fetch('graph.json', { cache: 'no-store' }).then(r => r.json()).then(g => { GRAPH = g; layout(); $('stMem').textContent = g.n + 'N / ' + g.e.length + 'L'; }).catch(() => { $('stMem').textContent = '-'; });
   tick(); setInterval(tick, 1000);
   function frame(t) { drawField(t); drawSky(t); drawEarth(t); drawCore(t); if (!reduce) requestAnimationFrame(frame); }
   requestAnimationFrame(frame);
