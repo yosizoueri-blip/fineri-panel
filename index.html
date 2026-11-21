@@ -14,7 +14,7 @@
 <link rel="icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="app.css?v=3.4">
+<link rel="stylesheet" href="app.css?v=3.5">
 </head>
 <body>
 <canvas id="brain" aria-hidden="true"></canvas>
@@ -97,6 +97,8 @@
     <span class="hub" aria-hidden="true"></span>
     <button type="button" data-href="https://claude.ai/code/project/chan_01NB255fjZpWAUx6aa11SZ5B"><i><svg viewBox="0 0 24 24"><path d="M4 6h16v10H10l-5 4v-4H4z"/></svg></i>MUMEI</button>
     <button type="button" data-href="obsidian://open"><i><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.5"/><circle cx="5" cy="6" r="1.6"/><circle cx="19" cy="6" r="1.6"/><circle cx="6" cy="19" r="1.6"/><circle cx="18" cy="18" r="1.6"/><path d="M6.3 7.2l4 3.3M17.7 7.2l-3.9 3.3M7.2 17.8l3.2-3.8M16.8 16.8l-3-2.9"/></svg></i>OPTIMUS</button>
+    <button type="button" data-href="https://x.com/home"><i><svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></svg></i>X</button>
+    <button type="button" data-open="games"><i><svg viewBox="0 0 24 24"><path d="M6 9h12a3 3 0 0 1 3 3v2a3 3 0 0 1-5.2 2L14 14h-4l-1.8 2A3 3 0 0 1 3 14v-2a3 3 0 0 1 3-3z"/><path d="M8 11v3M6.5 12.5h3M16 12h.01M18 13.5h.01"/></svg></i>GAMES</button>
     <button type="button" id="refreshBtn2"><i><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg></i>UPDATE</button>
     <button type="button" data-open="updates"><i><svg viewBox="0 0 24 24"><path d="M12 7v5l3 2"/><circle cx="12" cy="12" r="8"/></svg></i>LOG</button>
   </nav>
@@ -189,6 +191,16 @@
       <ul class="log-list" id="changelog"></ul>
     </div>
 
+    <div class="mod" data-mod="games" hidden>
+      <p class="hint" style="margin-bottom:14px">ここはこれから育てる場所。配信やプレイ記録をまとめていくよ。</p>
+      <div class="grid2">
+        <div class="card"><span class="go">COMING SOON</span><h3>MINECRAFT</h3><p>建築・壁画・ワールド記録</p></div>
+        <div class="card"><span class="go">COMING SOON</span><h3>NIOH SERIES</h3><p>仁王シリーズ</p></div>
+        <div class="card"><span class="go">COMING SOON</span><h3>ELDEN RING</h3><p>エルデンリング</p></div>
+        <div class="card"><span class="go">COMING SOON</span><h3>DEATH STRANDING</h3><p>デス・ストランディング</p></div>
+      </div>
+    </div>
+
     <div class="mod" data-mod="forest" hidden>
       <div class="crew">
         <div class="card"><img src="nu.jpg" alt="ぬーちゃん（チビ姿）"><h3>ぬーちゃん</h3><p>白い狐の霊獣。ふだんはチビ姿</p></div>
@@ -202,6 +214,6 @@
   </div>
 </section>
 
-<script src="app.js?v=3.4"></script>
+<script src="app.js?v=3.5"></script>
 </body>
 </html>

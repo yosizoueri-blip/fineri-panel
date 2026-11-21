@@ -1,8 +1,9 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '3.4';
+  const VERSION = '3.5';
   const CHANGELOG = [
+    { v: '3.5', d: '2026-11-21', items: ['下のバーに X と GAMES を追加（GAMES の中身はこれから）'] },
     { v: '3.4', d: '2026-11-21', items: ['歯車の歯を中くらいの高さの台形に。縁にふちどりと影を入れて立体的に', 'ボタンを押すと、ボタンが真ん中で大きくなってからページが開くように'] },
     { v: '3.3', d: '2026-11-21', items: ['ボタンは中だけガラスに。外の歯車と縁は金属に戻した', '歯車の歯を高く、角を立てた'] },
     { v: '3.2', d: '2026-11-21', items: ['中央のオプティマスの点を小さく、さらに暗く', 'ボタンをほぼ透明なガラスに'] },
@@ -466,7 +467,7 @@
 
   /* ---------- sheet ---------- */
   const sheet = $('sheet'), veil = $('veil');
-  const TITLES = { talk: ['COMMS', '無名と話す'], market: ['MARKET', '相場'], keiba: ['KEIBA', '競馬'], tasks: ['TASKS', 'やること'], memory: ['MEMORY', '記憶庫'], forest: ['FOREST', 'エルフの森'], updates: ['UPDATES', '更新履歴'] };
+  const TITLES = { talk: ['COMMS', '無名と話す'], market: ['MARKET', '相場'], keiba: ['KEIBA', '競馬'], tasks: ['TASKS', 'やること'], memory: ['MEMORY', '記憶庫'], forest: ['FOREST', 'エルフの森'], games: ['GAMES', 'ゲーム'], updates: ['UPDATES', '更新履歴'] };
   let lastFocus = null;
   function openMod(name, from) {
     lastFocus = from || null;

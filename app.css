@@ -118,12 +118,12 @@ button { font: inherit; }
 .info .ok { color: var(--up); }
 
 /* dock */
-.dock { position: relative; flex: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; padding: 14px 12px 4px; margin-top: 6px;
+.dock { position: relative; flex: none; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; padding: 14px 12px 4px; margin-top: 6px;
   border: 1px solid var(--edge); border-top-color: transparent; background: linear-gradient(0deg, hsl(var(--h) 60% 8% / .9), transparent);
   clip-path: polygon(0 0, 33% 0, 38% 12px, 62% 12px, 67% 0, 100% 0, 100% 100%, 0 100%); }
 .dock .hub { position: absolute; left: 50%; top: -2px; width: 40px; height: 22px; transform: translateX(-50%); border-radius: 0 0 40px 40px;
   background: radial-gradient(circle at 50% 0, #fff, var(--c) 40%, transparent 72%); filter: blur(.5px); }
-.dock button { display: grid; justify-items: center; gap: 3px; color: var(--mut); font-family: var(--font-tech); font-weight: 600; letter-spacing: .14em; font-size: 10px; background: none; border: 0; padding: 0; cursor: pointer; }
+.dock button { display: grid; justify-items: center; gap: 3px; color: var(--mut); font-family: var(--font-tech); font-weight: 600; letter-spacing: .06em; font-size: 10px; background: none; border: 0; padding: 0; cursor: pointer; }
 .dock i { width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid var(--edge);
   background: linear-gradient(150deg, hsl(var(--h) 40% 40% / .14), hsl(var(--h) 60% 10% / .08)); box-shadow: inset 0 1px 0 hsl(var(--h) 100% 80% / .3);
   clip-path: polygon(29.3% 0, 70.7% 0, 100% 29.3%, 100% 70.7%, 70.7% 100%, 29.3% 100%, 0 70.7%, 0 29.3%); }
