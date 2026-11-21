@@ -1,8 +1,9 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '3.32';
+  const VERSION = '3.33';
   const CHANGELOG = [
+    { v: '3.33', d: '2026-11-22', items: ['PC: 宝石まわりのシナプスの線を太く、点を大きく。ボタンの文字が切れないように', 'スマホ横: 時計を右、下のボタンを左の操作盤に入れて、宝石を下げた。アングロの顔と目が見えるように'] },
     { v: '3.32', d: '2026-11-22', items: ['PC: 両サイドを画面の端に寄せて細くし、アングロの顔が見えるように。ガラスも少し明るく', 'PC: 宝石まわりのシナプスを濃く', 'スマホ横: 右のパネルがボタンや時計にかぶらないように（iPhoneの切り欠き分も考える）'] },
     { v: '3.31', d: '2026-11-22', items: ['PC: ダミーパネルを追加（BIO 心電図・GEO・MEM ヒートマップ・THREAT）、NETとPOWERの行も増やした', 'スマホ横向きもPCと同じ形に: 両サイドがガラスの操作盤、真ん中に宝石・時計・ボタン'] },
     { v: '3.30', d: '2026-11-22', items: ['PC: 両サイドを枠なしのガラスに。後ろがぼけて、ななめに光の反射が入る'] },
@@ -250,7 +251,7 @@
     const ld = fit(linkCv), LW = linkCv.width, lc = LW / 2; lx.clearRect(0, 0, LW, LW);
     lx.save(); lx.beginPath(); lx.rect(0, 0, LW, LW); lx.arc(lc, lc, LW * .085, 0, TAU, true); lx.clip();
     lx.globalAlpha = innerWidth >= 1100 ? .34 : .12;
-    drawGraph(lx, ld, place(ring, lc, lc, LW, LW, rot * .6, t), Math.max(.7, Math.min(1.2, LW / ld / 380)), LW * .45, col, t, .5);
+    drawGraph(lx, ld, place(ring, lc, lc, LW, LW, rot * .6, t), Math.max(.7, Math.min(1.2, LW / ld / 380)) * (innerWidth >= 1100 ? 1.9 : 1), LW * .45, col, t, .5);
     lx.globalAlpha = 1; lx.restore();
   }
 
@@ -806,6 +807,12 @@
       else home.forEach(h => h.parent.insertBefore(h.el, h.next));
     };
     place(); mq.addEventListener('change', place);
+    // phone held sideways: the clock goes to the top of the right console and the dock to the bottom of the left one,
+    // so the gem can sit lower and アングロ's face shows
+    const mqL = matchMedia('(orientation: landscape) and (max-height: 600px) and (min-width: 640px)');
+    const moves = [['.info', Rr, 'start'], ['.dock', L, 'end']].map(([s, side, at]) => { const el = document.querySelector(s); return { el, side, at, parent: el.parentNode, next: el.nextSibling }; });
+    const placeL = () => moves.forEach(m => { if (mqL.matches) { m.at === 'start' ? m.side.prepend(m.el) : m.side.append(m.el); } else if (m.el.parentNode !== m.parent) m.parent.insertBefore(m.el, m.next); });
+    placeL(); mqL.addEventListener('change', placeL);
     // decorative values for the PC-only panels
     const rnd = (a, b) => a + Math.random() * (b - a);
     const nb = $('xNetBars'), pb = $('xPowBars'); for (let i = 0; i < 24; i++) { nb.append(document.createElement('i')); pb.append(document.createElement('i')); }
