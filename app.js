@@ -1,8 +1,9 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '3.22';
+  const VERSION = '3.23';
   const CHANGELOG = [
+    { v: '3.23', d: '2026-11-21', items: ['相場の定期報告が出ると真ん中の宝石が黒くなる。押すとオプティマスの報告メモが開いて、元の色に戻る', 'UPDATEのテストに「黒（報告）」ボタン'] },
     { v: '3.22', d: '2026-11-21', items: ['スマホを横向きにしたとき用の並べ方: 真ん中に操作盤、左にデータ、右に時計とボタン'] },
     { v: '3.21', d: '2026-11-21', items: ['顔の絵（アングロ）が休憩時間に目を閉じる: 10:00〜10:15、12:00〜13:00、15:00〜15:15'] },
     { v: '3.20', d: '2026-11-21', items: ['光るリングが回ると、手前の半分は宝石の前を通るように（今までずっと宝石のうしろだった）'] },
@@ -396,7 +397,7 @@
 
   /* ---------- core: rings + crystal ---------- */
   const core = $('core'), cx = core.getContext('2d');
-  let signal = { btc: 0, nk: 0, test: null };
+  let signal = { btc: 0, nk: 0, test: null, report: null };
   function crystalMode() {
     if (signal.test !== null) return signal.test;
     const s = [signal.btc, signal.nk].filter(v => Math.abs(v) >= 5);
@@ -428,7 +429,7 @@
     cx.fillStyle = fillFor(.95); cx.globalAlpha = .55; cx.fill(); cx.globalAlpha = 1; cx.strokeStyle = 'rgba(255,255,255,.6)'; cx.stroke();
     // inner fire
     cx.globalCompositeOperation = 'lighter';
-    const fire = cx.createRadialGradient(c, cy - R * .1, 0, c, cy - R * .1, R * .9); fire.addColorStop(0, 'rgba(255,255,255,.55)'); fire.addColorStop(.35, fillFor(.9).replace(/[\d.]+\)$/, '.35)')); fire.addColorStop(1, 'rgba(0,0,0,0)');
+    const fire = cx.createRadialGradient(c, cy - R * .1, 0, c, cy - R * .1, R * .9); fire.addColorStop(0, 'rgba(255,255,255,' + (reportOn() ? .07 : .55) + ')'); fire.addColorStop(.35, fillFor(.9).replace(/[\d.]+\)$/, '.35)')); fire.addColorStop(1, 'rgba(0,0,0,0)');
     cx.fillStyle = fire; cx.beginPath(); cx.arc(c, cy - R * .1, R * .9, 0, TAU); cx.fill();
     // passing glint: a four-point star that slides across the crown every few seconds
     const g = ((t || 0) % 5200) / 5200;
@@ -506,12 +507,12 @@
     const rot = reduce ? .4 : t * .0005, bob = reduce ? 0 : Math.sin(t * .0015) * 3 * u;
     const fillFor = m => l => { const h = hueOf(m); return h === null ? (white ? 'hsla(205,40%,' + (40 + 50 * l) + '%,.92)' : 'hsla(' + hue + ',100%,' + (28 + 50 * l) + '%,.92)') : 'hsla(' + h + ',100%,' + (25 + 45 * l) + '%,.94)'; };
     if (!reduce) orbits(c, cy + bob, 46 * u, t, false);
-    cx.shadowColor = glowCol(1, mode === 'split' ? '' : mode); cx.shadowBlur = 30 * u;
-    if (mode === 'split') {
+    cx.shadowColor = reportOn() ? 'hsla(265,50%,35%,.7)' : glowCol(1, mode === 'split' ? '' : mode); cx.shadowBlur = 30 * u;
+    if (mode === 'split' && !reportOn()) {
       cx.save(); cx.beginPath(); cx.rect(0, 0, c, W); cx.clip(); gem(c, cy + bob, 46 * u, rot, fillFor('up'), t); cx.restore();
       cx.save(); cx.beginPath(); cx.rect(c, 0, c, W); cx.clip(); gem(c, cy + bob, 46 * u, rot, fillFor('down'), t); cx.restore();
       cx.strokeStyle = 'rgba(255,255,255,.7)'; cx.lineWidth = 1.5 * u; cx.beginPath(); cx.moveTo(c, cy - 60 * u + bob); cx.lineTo(c, cy + 50 * u + bob); cx.stroke();
-    } else gem(c, cy + bob, 46 * u, rot, fillFor(mode), t);
+    } else gem(c, cy + bob, 46 * u, rot, reportOn() ? (l => 'hsla(250,18%,' + (2 + 13 * l) + '%,.98)') : fillFor(mode), t);
     if (!reduce) orbits(c, cy + bob, 46 * u, t, true);
     cx.shadowBlur = 0;
     rings('front');
@@ -699,7 +700,7 @@
     location.replace(location.pathname + '?r=' + Date.now());
   }
   ['refreshBtn', 'refreshBtn2', 'refreshBtn3'].forEach(id => { const b = $(id); if (b) b.addEventListener('click', e => hardRefresh(e.currentTarget)); });
-  document.querySelectorAll('[data-test]').forEach(b => b.addEventListener('click', () => { signal.test = b.dataset.test === '' ? null : b.dataset.test; closeMod(); }));
+  document.querySelectorAll('[data-test]').forEach(b => b.addEventListener('click', () => { signal.test = b.dataset.test === '' ? null : b.dataset.test; $('gemBtn').classList.toggle('on', reportOn()); closeMod(); }));
 
   /* ---------- ぬーちゃん ---------- */
   const nu = $('nu'), say = $('nuSay'); let realUntil = 0, sayTimer = 0;
@@ -723,6 +724,23 @@
     $(idInfo).innerHTML = ''; const s = document.createElement('span'); s.className = cls; s.textContent = fmtPct(pct) + ' /1h'; $(idInfo).append(s);
     $(idSheetV).textContent = unit + Math.round(price).toLocaleString('ja-JP'); $(idSheetC).textContent = fmtPct(pct); $(idSheetC).className = cls;
   }
+  // weekly market report: the market thread pushes only a timestamp (data/report.json) to this public repo.
+  // An unseen report turns the crystal black; tapping it opens the private note in the vault.
+  const REPORT_NOTE = 'obsidian://open?vault=fineri-vault&file=' + encodeURIComponent('10_Profile/life/bitget-close-2026');
+  function reportSeen() { try { return localStorage.getItem('fineri.reportSeen'); } catch (e) { return null; } }
+  function reportOn() { return signal.test === 'report' || (!!signal.report && signal.report !== reportSeen()); }
+  async function report() {
+    try { const r = await fetch('https://raw.githubusercontent.com/yosizoueri-blip/fineri-panel/data/report.json?t=' + Date.now(), { cache: 'no-store' });
+      const j = await r.json(); signal.report = j.at || null; } catch (e) {}
+    $('gemBtn').classList.toggle('on', reportOn());
+  }
+  $('gemBtn').addEventListener('click', () => {
+    if (!reportOn()) return;
+    try { if (signal.report) localStorage.setItem('fineri.reportSeen', signal.report); } catch (e) {}
+    if (signal.test === 'report') signal.test = null;
+    $('gemBtn').classList.remove('on');
+    location.href = REPORT_NOTE;
+  });
   async function btc() {
     try {
       const r = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1', { cache: 'no-store' });
@@ -780,7 +798,7 @@
     rows[0].textContent = hex() + ' ' + hex() + ' ' + hex();
   }
   telemetry(); setInterval(telemetry, reduce ? 5000 : 700);
-  btc(); nikkei(); setInterval(btc, 5 * 60e3); setInterval(nikkei, 5 * 60e3);
+  btc(); nikkei(); report(); setInterval(report, 10 * 60e3); setInterval(btc, 5 * 60e3); setInterval(nikkei, 5 * 60e3);
 
   /* ---------- boot ---------- */
   fetch('graph.json', { cache: 'no-store' }).then(r => r.json()).then(g => { GRAPH = g; layout(); $('stMem').textContent = g.n + 'N / ' + g.e.length + 'L'; }).catch(() => { $('stMem').textContent = '-'; });

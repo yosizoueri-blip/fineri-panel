@@ -356,3 +356,7 @@ body.eyes-shut .backdrop .face:not(.shut) { opacity: 0; }
   .dp-hex { display: none; }
   .info .t { font-size: 26px; }
 }
+
+/* crystal tap target: only active while a weekly report is unseen */
+.gem-btn { position: absolute; left: 50%; top: 50%; width: 22%; aspect-ratio: 1; transform: translate(-50%, -50%); z-index: 3; border: 0; border-radius: 50%; background: none; pointer-events: none; -webkit-tap-highlight-color: transparent; }
+.gem-btn.on { pointer-events: auto; cursor: pointer; }
