@@ -1,8 +1,14 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '2.5';
+  const VERSION = '2.6';
   const CHANGELOG = [
+    { v: '2.6', d: '2026-11-21', items: [
+      '頭の中のオプティマスを紅色に。肌の下で動いて見えるように',
+      '中央コアのまわりのオプティマスを復活。頭の中と同じ光が走る（奥の脳が手前に映る）',
+      '下の時計とボタンを、中心に向かって少し上向きに傾けた',
+      '地球に本物の大陸と山脈。1時間で1回転',
+      '中央の宝石をブリリアントカットに。中から光って、時々きらっと光が走る。まわりを2本の軌道が回る'] },
     { v: '2.5', d: '2026-11-21', items: [
       'スクロールなしで1画面に収まるように',
       '顔の絵を大きく、頭が画面の上に来るように。オプティマスは頭（脳）の中で光る',
@@ -118,61 +124,78 @@
     const ang = ids.map(i => Math.atan2(p[i][1], p[i][0])), dis = ids.map(i => Math.hypot(p[i][0], p[i][1]));
     const byA = ids.map((_, k) => k).sort((x, y) => ang[x] - ang[y]), byD = ids.map((_, k) => k).sort((x, y) => dis[x] - dis[y]);
     const aR = [], dR = []; byA.forEach((k, r) => aR[k] = r); byD.forEach((k, r) => dR[k] = r);
-    lay = new Array(N);
-    ids.forEach((i, k) => { const A = (aR[k] + .5) / ids.length * TAU + (rnd() - .5) * .15, R = .18 + Math.sqrt((dR[k] + .5) / ids.length) * .8 + (rnd() - .5) * .04;
-      lay[i] = { x: Math.cos(A) * R, y: Math.sin(A) * R, ph: rnd() * TAU, sp: .3 + rnd() * .5 }; });
-    lay[GRAPH.hub] = { x: 0, y: 0, ph: 0, sp: 0 };
+    lay = new Array(N); ring = new Array(N);
+    ids.forEach((i, k) => { const A = (aR[k] + .5) / ids.length * TAU + (rnd() - .5) * .15, j = rnd() - .5, ph = rnd() * TAU, sp = .3 + rnd() * .5;
+      const Rb = .18 + Math.sqrt((dR[k] + .5) / ids.length) * .8 + j * .04, Rr = .31 + dR[k] / ids.length * .27 + j * .03;
+      lay[i] = { x: Math.cos(A) * Rb, y: Math.sin(A) * Rb, ph, sp }; ring[i] = { x: Math.cos(A) * Rr, y: Math.sin(A) * Rr, ph, sp }; });
+    lay[GRAPH.hub] = ring[GRAPH.hub] = { x: 0, y: 0, ph: 0, sp: 0 };
     dust = []; for (let i = 0; i < 40; i++) dust.push({ x: rnd(), y: rnd(), ph: rnd() * TAU });
   }
-  function drawField(t) {
-    const d = fit(field), W = field.width, H = field.height; fx.clearRect(0, 0, W, H);
-    // faint far-away dust over the whole screen
-    dust.forEach(p => { fx.fillStyle = col(.08 + .06 * Math.sin(t * .001 + p.ph)); fx.beginPath(); fx.arc(p.x * W, p.y * H, 1 * d, 0, TAU); fx.fill(); });
-    if (!lay.length) return;
-    // the brain: inside the head of the face artwork, so the links show through its skin
-    const fr = faceEl.getBoundingClientRect(), cx0 = (fr.left + fr.width * .5) * d, cy0 = (fr.top + fr.height * .245) * d;
-    const RX = fr.width * .24 * d, RY = fr.height * .12 * d, RAD = (RX + RY) / 2, rot = reduce ? 0 : t * .00004, cs = Math.cos(rot), sn = Math.sin(rot);
-    const P = lay.map(n => { const wob = .02, x = n.x + Math.sin(t * .0004 * n.sp + n.ph) * wob, y = n.y + Math.cos(t * .00035 * n.sp + n.ph) * wob;
-      return [cx0 + (x * cs - y * sn) * RX, cy0 + (x * sn + y * cs) * RY]; });
-    const sc = Math.max(.7, Math.min(1.4, RAD / (110 * d)));
-    // heartbeat: a wave leaves the hub every few seconds and lights the links it reaches
-    if (!reduce && t > nextWave) { waves.push(t); nextWave = t + 4200; }
-    waves = waves.filter(w => t - w < 2200);
-    const hubP = P[GRAPH.hub], waveLit = (x, y) => { let v = 0; waves.forEach(w => { const r = (t - w) / 2200 * 1.1 * RAD, dd = Math.abs(Math.hypot(x - hubP[0], y - hubP[1]) - r); v = Math.max(v, Math.max(0, 1 - dd / (RAD * .12)) * (1 - (t - w) / 2200)); }); return v; };
-    fx.save();
-    // links: glow underlay + bright core line
-    fx.lineCap = 'round';
+  let ring = [];
+  const brainCv = $('brain'), bx = brainCv.getContext('2d'), stageEl = $('stage');
+  const crim = (a, l) => 'hsla(350,82%,' + (l || 40) + '%,' + a + ')';
+  // one graph, two places: the brain under the skin (crimson) and the ring around the core (base colour).
+  // The same pulses run through both, so the core mirrors what moves in the head.
+  function drawGraph(g, d, P, sc, RAD, colour, t) {
+    const hubP = P[GRAPH.hub], waveLit = (x, y) => { let v = 0; waves.forEach(w => { const k = (t - w) / 2200, r = k * 1.1 * RAD, dd = Math.abs(Math.hypot(x - hubP[0], y - hubP[1]) - r); v = Math.max(v, Math.max(0, 1 - dd / (RAD * .12)) * (1 - k)); }); return v; };
+    g.lineCap = 'round';
     GRAPH.e.forEach(([a, b]) => {
       const A = P[a], B = P[b], w = (deg[a] + deg[b]) / (2 * maxDeg), lit = waveLit((A[0] + B[0]) / 2, (A[1] + B[1]) / 2);
-      fx.strokeStyle = col(.10 + .18 * lit); fx.lineWidth = (4 + 3 * w) * d * sc; fx.beginPath(); fx.moveTo(A[0], A[1]); fx.lineTo(B[0], B[1]); fx.stroke();
-      fx.strokeStyle = col(.34 + .3 * w + .4 * lit, 72); fx.lineWidth = (1 + .9 * w) * d * sc; fx.beginPath(); fx.moveTo(A[0], A[1]); fx.lineTo(B[0], B[1]); fx.stroke();
+      g.strokeStyle = colour(.10 + .18 * lit); g.lineWidth = (4 + 3 * w) * d * sc; g.beginPath(); g.moveTo(A[0], A[1]); g.lineTo(B[0], B[1]); g.stroke();
+      g.strokeStyle = colour(.34 + .3 * w + .4 * lit, 72); g.lineWidth = (1 + .9 * w) * d * sc; g.beginPath(); g.moveTo(A[0], A[1]); g.lineTo(B[0], B[1]); g.stroke();
     });
-    // light running along the links (comet with a tail)
-    if (!reduce && GRAPH.e.length) for (let k = 0; k < 2; k++) if (Math.random() < .2 && pulses.length < 26) { const e = GRAPH.e[(Math.random() * GRAPH.e.length) | 0]; pulses.push({ a: e[Math.random() < .5 ? 0 : 1], e, k: 0, v: .008 + Math.random() * .008 }); }
-    fx.globalCompositeOperation = 'lighter';
-    for (let i = pulses.length - 1; i >= 0; i--) {
-      const p = pulses[i]; p.k += p.v; if (p.k >= 1) { pulses.splice(i, 1); continue; }
+    g.globalCompositeOperation = 'lighter';
+    pulses.forEach(p => {
       const A = P[p.a], B = P[p.e[0] === p.a ? p.e[1] : p.e[0]], x = A[0] + (B[0] - A[0]) * p.k, y = A[1] + (B[1] - A[1]) * p.k;
       const k0 = Math.max(0, p.k - .22), tx = A[0] + (B[0] - A[0]) * k0, ty = A[1] + (B[1] - A[1]) * k0;
-      const g = fx.createLinearGradient(tx, ty, x, y); g.addColorStop(0, col(0)); g.addColorStop(1, col(.95, 82));
-      fx.strokeStyle = g; fx.lineWidth = 2.4 * d; fx.beginPath(); fx.moveTo(tx, ty); fx.lineTo(x, y); fx.stroke();
-      fx.fillStyle = col(1, 92); fx.shadowColor = col(1); fx.shadowBlur = 14 * d; fx.beginPath(); fx.arc(x, y, 2.4 * d, 0, TAU); fx.fill(); fx.shadowBlur = 0;
-    }
-    // nodes: size and glow by how many links they have
+      const gr = g.createLinearGradient(tx, ty, x, y); gr.addColorStop(0, colour(0)); gr.addColorStop(1, colour(.95, 82));
+      g.strokeStyle = gr; g.lineWidth = 2.4 * d * sc; g.beginPath(); g.moveTo(tx, ty); g.lineTo(x, y); g.stroke();
+      g.fillStyle = colour(1, 92); g.shadowColor = colour(1); g.shadowBlur = 14 * d; g.beginPath(); g.arc(x, y, 2.4 * d * sc, 0, TAU); g.fill(); g.shadowBlur = 0;
+    });
     lay.forEach((n, i) => {
       const w = deg[i] / maxDeg, x = P[i][0], y = P[i][1], lit = waveLit(x, y), r = (1.8 + 5 * Math.sqrt(w)) * d * sc, br = .55 + .25 * Math.sin(t * .002 + n.ph) + .3 * lit;
-      const g = fx.createRadialGradient(x, y, 0, x, y, r * 4.5); g.addColorStop(0, col(.35 * br + .2 * w)); g.addColorStop(1, col(0));
-      fx.fillStyle = g; fx.beginPath(); fx.arc(x, y, r * 4.5, 0, TAU); fx.fill();
-      fx.fillStyle = col(Math.min(1, .6 + .4 * br), 80); fx.beginPath(); fx.arc(x, y, r, 0, TAU); fx.fill();
+      const gr = g.createRadialGradient(x, y, 0, x, y, r * 4.5); gr.addColorStop(0, colour(.35 * br + .2 * w)); gr.addColorStop(1, colour(0));
+      g.fillStyle = gr; g.beginPath(); g.arc(x, y, r * 4.5, 0, TAU); g.fill();
+      g.fillStyle = colour(Math.min(1, .6 + .4 * br), 80); g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill();
     });
-    fx.globalCompositeOperation = 'source-over'; fx.restore();
+    g.globalCompositeOperation = 'source-over';
+  }
+  const place = (L, cx0, cy0, RX, RY, rot, t) => { const cs = Math.cos(rot), sn = Math.sin(rot);
+    return L.map(n => { const wob = .02, x = n.x + Math.sin(t * .0004 * n.sp + n.ph) * wob, y = n.y + Math.cos(t * .00035 * n.sp + n.ph) * wob;
+      return [cx0 + (x * cs - y * sn) * RX, cy0 + (x * sn + y * cs) * RY]; }); };
+  function drawField(t) {
+    const d = fit(field), W = field.width, H = field.height; fx.clearRect(0, 0, W, H);
+    fit(brainCv); bx.clearRect(0, 0, brainCv.width, brainCv.height);
+    dust.forEach(p => { fx.fillStyle = col(.08 + .06 * Math.sin(t * .001 + p.ph)); fx.beginPath(); fx.arc(p.x * W, p.y * H, 1 * d, 0, TAU); fx.fill(); });
+    if (!lay.length) return;
+    // shared heartbeat + pulses
+    if (!reduce && t > nextWave) { waves.push(t); nextWave = t + 4200; }
+    waves = waves.filter(w => t - w < 2200);
+    if (!reduce && GRAPH.e.length) for (let k = 0; k < 2; k++) if (Math.random() < .2 && pulses.length < 26) { const e = GRAPH.e[(Math.random() * GRAPH.e.length) | 0]; pulses.push({ a: e[Math.random() < .5 ? 0 : 1], e, k: 0, v: .008 + Math.random() * .008 }); }
+    for (let i = pulses.length - 1; i >= 0; i--) { pulses[i].k += pulses[i].v; if (pulses[i].k >= 1) pulses.splice(i, 1); }
+    const rot = reduce ? 0 : t * .00004;
+    // 1) the brain, under the skin of the face
+    const fr = faceEl.getBoundingClientRect(), RX = fr.width * .24 * d, RY = fr.height * .12 * d;
+    drawGraph(bx, d, place(lay, (fr.left + fr.width * .5) * d, (fr.top + fr.height * .245) * d, RX, RY, rot, t), Math.max(.7, Math.min(1.4, (RX + RY) / 2 / (110 * d))), (RX + RY) / 2, crim, t);
+    // 2) its reflection: the ring around the core
+    const sr = stageEl.getBoundingClientRect(), cx0 = (sr.left + sr.width / 2) * d, cy0 = (sr.top + sr.height / 2) * d, RAD = sr.width * d;
+    fx.save(); fx.beginPath(); fx.rect(0, 0, W, H); fx.arc(cx0, cy0, sr.width * .26 * d, 0, TAU, true); fx.clip();
+    drawGraph(fx, d, place(ring, cx0, cy0, RAD, RAD, rot * .6, t), Math.max(.7, Math.min(1.2, sr.width / 380)), RAD * .45, col, t);
+    fx.restore();
   }
 
   /* ---------- sky: globe, sun, moon ---------- */
   const sky = $('sky'), sx = sky.getContext('2d');
-  const land = []; { let s = 3; const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
-    // clustered points on a sphere → continents-like specks
-    for (let c = 0; c < 9; c++) { const lat0 = (r() - .5) * 2.2, lon0 = r() * TAU; for (let k = 0; k < 60; k++) land.push([lat0 + (r() - .5) * .7, lon0 + (r() - .5) * 1.1]); } }
+  // land: 2° equirectangular bitmap built from Natural Earth (world-atlas land-110m), 90 rows × 180 cols, hex per row
+  const LAND = ["000000000000000000000000000000000000000000000","000000000000000000000000000000000000000000000","000000000000000000000000000000000000000000000","0000000000017fe01ffe0000000000000000000000000","00000000003ffffffffff0000000600000e0000000000","00000000277ffdffffff8001fc000000007c000000000","0000000750f7e3ffffff800060000010000fc00000000","00000001f8bfc007ffff00000000038007ffe001c8000","0000001fcdf7f003ffff000000000c043fffffe0c0000","803c000dfcb7ff03fffe000003800c1fffffffffff800","01fffffffefddf81fff800003ff800fffffffffffffff","f0ffffffffff87e1ff8000007ffefffffffffffffffff","b3ffffffffff9fc0fc03e000fbfffffffffffffffffff","09fffffffff8c3c0f8000007e7fffffffffffffffffff","01ffffffffe01e007800000fe7ffffffffffffffff3f8","007a07ffffe01f4000000007e3fffffffffffffff6300","003001fffff81fe000000183c7ffffffffffffff00f00","000000ffffffbff8000003c3bffffffffffffffc01e00","0000017fffffbffc000006efffffffffffffffffc0c00","0000003ffffffffc000001ffffffffffffffffffc0000","0000001fffffffe7000000ffffffffffffffffff40000","0000000fffffffc30000007fffffffffffffffff40000","0000000fffffffe00000007fffb7cffffffffffe40000","0000000ffffffe00000007f9bf03cffffffffff8e0000","0000000ffffffe00000007e2ffffe7ffffffffe080000","0000000ffffff800000007c22dffe7fffffffcc080000","00000007fffff0000000039f44ffe7fffffffe6380000","00000007fffff000000001ff002ffffffffffc6f00000","00000001ffffc000000007ff881ffffffffffe1800000","00000000ffffc000000007fffffffffffffffe0000000","00000000ffe0c00000000fffffffdffffffffe0000000","000000005fc0400000001fffffefeffffffffc0000000","000000002f80400000003ffffffff6fffffffe0000000","000000000780c00000003ffffff7ff0ffffff20000000","0000000007c6180000007ffffffbff07fcffc00000000","0008000003ec170000003ffffffbfe03f87e800000000","0000000000fc000000003ffffff9fc01e07f020000000","00000000001f000000007ffffffdf001c01f820000000","000000000007800000007fffffff8001c01f830000000","0000000000010fa000003fffffff7000c013018000000","000000000000fff000001fffffffe000e010018000000","0000000000001ff800000fffffffe0002008018000000","0000000000001fff000007cfffffc000002c1c0000000","0000000000001fff80000001ffffc000003c380000000","0000000000003fff80000003ffff0000001cfb2000000","0000000000007fffe0000003fffe0000000c7e1800000","0000000000003ffffc000001fffc00000006762f80000","0000000000007fffff000000fffc000000020303e4000","0000000000003fffff800000fffc00000001e001f0000","0000000000003fffff000000fffc000000000680d8200","0000000000001fffff0000007ffc00000000000000000","0000000000001ffffe000000fffe20000000001c40000","0000000000000ffffe000000fffc6000000000fc60000","00000000000003fffe000000fffce000000001ffe0001","00000000000001fffc000000fff0e000000003fff0000","00000000000001fffc0000007ff0c00000000ffff8080","00000000000001fff80000007ff0c00000001ffffc000","00000000000001ffc00000007fe0c00000001ffffc000","00000000000003ffc00000007fe0000000001ffffe000","00000000000003ffc00000003fc0000000001ffffe000","00000000000003ff800000001f80000000001ffffe000","00000000000003ff000000001f00000000000f87fc000","00000000000003fe000000000000000000000c03fc000","00000000000007fc000000000000000000000000f8004","00000000000007f000000000000000000000000040006","00000000000007e00000000000000000000000003000c","00000000000007c000000000000000000000000010018","000000000000078000000000000000000000000000030","0000000000000f8000000000000000000000000000020","0000000000000f8000000000000000080000000000000","0000000000000f0000000000000000000000000000000","000000000000070000000000000000000000000000000","000000000000038000000000000000000000000000000","000000000000000000000000000000000000000000000","000000000000000000000000000000000000000000000","000000000000000000000000000000000000000000000","000000000000000000000000000000000000000000000","000000000000002000000000000000000000000000000","00000000000000c00000000000003f001fffffffe0000","00000000000002c000000000003bfff87fffffffff800","00000000000007e0000003fffffffff3fffffffffffe0","0000000003fe07f000003ffffffffffffffffffffffe0","00005fffffffffc000007ffffffffffffffffffffff80","001ffffffffffe00001ffffffffffffffffffffffff00","00cffffffffff00070fffffffffffffffffffffffff80","0007fffffffffff1f3ffffffffffffffffffffffffe00","0007fffffffffffffffffffffffffffffffffffffffc0","fffffffffffffffffffffffffffffffffffffffffffff","fffffffffffffffffffffffffffffffffffffffffffff","fffffffffffffffffffffffffffffffffffffffffffff"];
+  const land = []; LAND.forEach((h, row) => { const bits = h.split('').map(c => parseInt(c, 16).toString(2).padStart(4, '0')).join('');
+    for (let col_ = 0; col_ < 180; col_++) if (bits[col_] === '1') land.push([(89 - row * 2) * Math.PI / 180, (col_ * 2 - 179) * Math.PI / 180]); });
+  // mountain ranges (lon, lat): drawn as brighter ridges
+  const RANGES = [[[73,35],[78,33],[82,30],[86,28],[90,28],[95,28]], [[70,38],[75,36],[80,36]], [[-75,10],[-77,0],[-77,-10],[-70,-18],[-69,-25],[-70,-33],[-71,-40],[-73,-50]],
+    [[-150,62],[-135,59],[-122,52],[-115,47],[-110,42],[-107,37],[-105,32]], [[6,45],[10,46.5],[14,47]], [[60,68],[59,60],[58,55],[58,51]], [[-8,31],[0,34],[8,36]],
+    [[40,43.5],[47,41.5]], [[145,-15],[147,-25],[150,-32],[148,-37]], [[37,13],[38,5],[36,-3],[35,-10]], [[45,36],[50,32],[56,27]], [[100,35],[104,30],[100,25]]];
+  const ridge = []; RANGES.forEach(r => { for (let i = 0; i < r.length - 1; i++) for (let k = 0; k < 8; k++) { const f = k / 8;
+    ridge.push([(r[i][1] + (r[i + 1][1] - r[i][1]) * f) * Math.PI / 180, (r[i][0] + (r[i + 1][0] - r[i][0]) * f) * Math.PI / 180]); } });
   function moonAge(date) { const syn = 29.530588853, ref = Date.UTC(2000, 0, 6, 18, 14); return (((date - ref) / 864e5) % syn + syn) % syn; }
   function sunTimes(n) { // Tokyo, hours JST
     const start = Date.UTC(n.getUTCFullYear(), 0, 0), N = Math.floor((n - start) / 864e5);
@@ -263,7 +286,7 @@
     const body = ex.createRadialGradient(gx, gy - R * .6, 0, gx, gy, R); body.addColorStop(0, col(.22, 30)); body.addColorStop(1, 'rgba(0,4,10,.95)');
     ex.fillStyle = body; ex.beginPath(); ex.arc(gx, gy, R, 0, TAU); ex.fill();
     ex.beginPath(); ex.arc(gx, gy, R, 0, TAU); ex.clip();
-    const rot = reduce ? 0 : t * .00004, tilt = .42;
+    const rot = (Date.now() / 3600e3 % 1) * TAU, tilt = .42; // one turn per hour
     const proj = (lat, lon) => { const x = Math.cos(lat) * Math.sin(lon + rot), y = Math.sin(lat), z = Math.cos(lat) * Math.cos(lon + rot);
       const y2 = y * Math.cos(tilt) - z * Math.sin(tilt), z2 = y * Math.sin(tilt) + z * Math.cos(tilt); return [gx + x * R, gy - y2 * R, z2]; };
     ex.lineWidth = 1 * d;
@@ -271,7 +294,11 @@
       for (let la = -1.5; la <= 1.5; la += .06) { const p = proj(la, lo * Math.PI / 6); if (p[2] < 0) { pen = false; continue; } pen ? ex.lineTo(p[0], p[1]) : ex.moveTo(p[0], p[1]); pen = true; } ex.stroke(); }
     for (let la = -60; la <= 60; la += 20) { ex.strokeStyle = col(.15); ex.beginPath(); let pen = false;
       for (let lo = 0; lo <= TAU + .05; lo += .05) { const p = proj(la * Math.PI / 180, lo); if (p[2] < 0) { pen = false; continue; } pen ? ex.lineTo(p[0], p[1]) : ex.moveTo(p[0], p[1]); pen = true; } ex.stroke(); }
-    land.forEach(([la, lo]) => { const p = proj(la, lo); if (p[2] < .05) return; ex.fillStyle = col(.25 + .55 * p[2], 72); ex.fillRect(p[0], p[1], 1.6 * d, 1.6 * d); });
+    const dot = Math.max(1.2 * d, R / 70);
+    land.forEach(([la, lo]) => { const p = proj(la, lo); if (p[2] < .02) return; ex.fillStyle = col(.18 + .5 * p[2], 62); ex.fillRect(p[0] - dot / 2, p[1] - dot / 2, dot, dot); });
+    ex.shadowColor = col(1); ex.shadowBlur = 6 * d;
+    ridge.forEach(([la, lo]) => { const p = proj(la, lo); if (p[2] < .02) return; ex.fillStyle = col(.4 + .6 * p[2], 88); ex.beginPath(); ex.arc(p[0], p[1], dot * .75, 0, TAU); ex.fill(); });
+    ex.shadowBlur = 0;
     ex.restore();
     ex.strokeStyle = col(.8); ex.lineWidth = 1.5 * d; ex.shadowColor = col(1); ex.shadowBlur = 14 * d;
     ex.beginPath(); ex.arc(gx, gy, R, Math.PI * 1.1, Math.PI * 1.9); ex.stroke(); ex.shadowBlur = 0;
@@ -288,18 +315,47 @@
     const up = s.some(v => v > 0), down = s.some(v => v < 0);
     return up && down ? 'split' : up ? 'up' : 'down';
   }
-  function gem(c, cy, R, rot, fillFor) {
-    const ring = [], top = [c, cy - R * 1.25], bot = [c, cy + R * 1.05], crown = [];
-    for (let i = 0; i < 8; i++) { const a = rot + i * TAU / 8; ring.push([c + Math.cos(a) * R * .78, cy - R * .1 + Math.sin(a) * R * .2, Math.sin(a)]);
-      crown.push([c + Math.cos(a) * R * .42, cy - R * .62 + Math.sin(a) * R * .1, Math.sin(a)]); }
+  // brilliant-cut crystal: table, crown, girdle and a long pavilion, lit from inside, with a passing glint
+  function gem(c, cy, R, rot, fillFor, t) {
+    const n = 12, table = [], crown = [], gird = [], top = cy - R * .78, bot = [c, cy + R * 1.35];
+    for (let i = 0; i < n; i++) { const a = rot + i * TAU / n, s = Math.sin(a);
+      table.push([c + Math.cos(a) * R * .42, top + s * R * .09, s]);
+      crown.push([c + Math.cos(a + Math.PI / n) * R * .78, cy - R * .42 + Math.sin(a + Math.PI / n) * R * .16, Math.sin(a + Math.PI / n)]);
+      gird.push([c + Math.cos(a) * R, cy - R * .18 + s * R * .2, s]); }
+    const L = (a, k) => k + (1 - k) * (.5 + .5 * Math.cos(a - 2.3));
     const faces = [];
-    for (let i = 0; i < 8; i++) { const j = (i + 1) % 8, z = (ring[i][2] + ring[j][2]) / 2;
-      faces.push({ p: [crown[i], crown[j], ring[j], ring[i]], z, l: .55 + .45 * Math.cos(rot + (i + .5) * TAU / 8 - 2.2) });
-      faces.push({ p: [ring[i], ring[j], bot], z: z - .01, l: .35 + .4 * Math.cos(rot + (i + .5) * TAU / 8 - 2.2) });
-      faces.push({ p: [crown[i], crown[j], top], z: z + .01, l: .6 + .4 * Math.cos(rot + (i + .5) * TAU / 8 - 2.6) }); }
-    faces.sort((a, b) => a.z - b.z);
-    faces.forEach(f => { cx.beginPath(); f.p.forEach((q, k) => k ? cx.lineTo(q[0], q[1]) : cx.moveTo(q[0], q[1])); cx.closePath();
-      cx.fillStyle = fillFor(Math.max(.15, f.l)); cx.fill(); cx.strokeStyle = 'rgba(255,255,255,.35)'; cx.lineWidth = .8; cx.stroke(); });
+    for (let i = 0; i < n; i++) { const j = (i + 1) % n, a = rot + (i + .5) * TAU / n, z = Math.sin(a);
+      faces.push({ p: [gird[i], gird[j], bot], z: z - .02, l: L(a, .2) * .8 });
+      faces.push({ p: [table[i], table[j], crown[i]], z: z + .02, l: L(a, .45) });
+      faces.push({ p: [table[j], crown[j], crown[i]], z: z + .015, l: L(a + .3, .35) });
+      faces.push({ p: [crown[i], gird[j], gird[i]], z: z + .01, l: L(a - .2, .3) * .9 });
+      faces.push({ p: [crown[i], crown[j], gird[j]], z: z + .012, l: L(a + .2, .3) }); }
+    faces.sort((x, y) => x.z - y.z);
+    cx.lineJoin = 'round';
+    faces.forEach(f => { if (f.z < -.2) return; cx.beginPath(); f.p.forEach((q, k) => k ? cx.lineTo(q[0], q[1]) : cx.moveTo(q[0], q[1])); cx.closePath();
+      cx.fillStyle = fillFor(Math.max(.12, f.l)); cx.fill(); cx.strokeStyle = 'rgba(255,255,255,' + (.18 + .3 * Math.max(0, f.z)) + ')'; cx.lineWidth = .7; cx.stroke(); });
+    // table (flat top)
+    cx.beginPath(); table.forEach((q, k) => k ? cx.lineTo(q[0], q[1]) : cx.moveTo(q[0], q[1])); cx.closePath();
+    cx.fillStyle = fillFor(.95); cx.globalAlpha = .55; cx.fill(); cx.globalAlpha = 1; cx.strokeStyle = 'rgba(255,255,255,.6)'; cx.stroke();
+    // inner fire
+    cx.globalCompositeOperation = 'lighter';
+    const fire = cx.createRadialGradient(c, cy - R * .1, 0, c, cy - R * .1, R * .9); fire.addColorStop(0, 'rgba(255,255,255,.55)'); fire.addColorStop(.35, fillFor(.9).replace(/[\d.]+\)$/, '.35)')); fire.addColorStop(1, 'rgba(0,0,0,0)');
+    cx.fillStyle = fire; cx.beginPath(); cx.arc(c, cy - R * .1, R * .9, 0, TAU); cx.fill();
+    // passing glint: a four-point star that slides across the crown every few seconds
+    const g = ((t || 0) % 5200) / 5200;
+    if (g < .3 && !reduce) { const k = g / .3, x = c - R * .7 + R * 1.4 * k, y = cy - R * .55 + Math.sin(k * Math.PI) * -R * .15, s = Math.sin(k * Math.PI) * R * .55;
+      cx.fillStyle = 'rgba(255,255,255,.9)'; cx.beginPath(); cx.moveTo(x, y - s); cx.lineTo(x + s * .12, y - s * .12); cx.lineTo(x + s, y); cx.lineTo(x + s * .12, y + s * .12);
+      cx.lineTo(x, y + s); cx.lineTo(x - s * .12, y + s * .12); cx.lineTo(x - s, y); cx.lineTo(x - s * .12, y - s * .12); cx.closePath(); cx.fill(); }
+    cx.globalCompositeOperation = 'source-over';
+  }
+  // two thin orbits with beads circling the crystal (back half drawn before the gem, front half after)
+  function orbits(c, cy, R, t, front) {
+    [[1.55, .28, .5, t * .0009], [1.35, .2, -.6, -t * .0012]].forEach(([k, f, tilt, ph]) => {
+      cx.save(); cx.translate(c, cy); cx.rotate(tilt); cx.strokeStyle = col(front ? .55 : .25); cx.lineWidth = 1;
+      cx.beginPath(); cx.ellipse(0, 0, R * k, R * k * f, 0, front ? 0 : Math.PI, front ? Math.PI : TAU); cx.stroke();
+      const a = ph % TAU, inFront = Math.sin(a) > 0;
+      if (inFront === front) { cx.fillStyle = col(1, 88); cx.shadowColor = col(1); cx.shadowBlur = 10; cx.beginPath(); cx.arc(Math.cos(a) * R * k, Math.sin(a) * R * k * f, 2.6, 0, TAU); cx.fill(); cx.shadowBlur = 0; }
+      cx.restore(); });
   }
   function drawCore(t) {
     const d = fit(core), W = core.width, c = W / 2, cy = W / 2, u = W / 540; cx.clearRect(0, 0, W, W);
@@ -340,12 +396,14 @@
     // crystal
     const rot = reduce ? .4 : t * .0005, bob = reduce ? 0 : Math.sin(t * .0015) * 3 * u;
     const fillFor = m => l => { const h = hueOf(m); return h === null ? (white ? 'hsla(205,40%,' + (40 + 50 * l) + '%,.92)' : 'hsla(' + hue + ',100%,' + (28 + 50 * l) + '%,.92)') : 'hsla(' + h + ',100%,' + (25 + 45 * l) + '%,.94)'; };
+    if (!reduce) orbits(c, cy + bob, 46 * u, t, false);
     cx.shadowColor = glowCol(1, mode === 'split' ? '' : mode); cx.shadowBlur = 30 * u;
     if (mode === 'split') {
-      cx.save(); cx.beginPath(); cx.rect(0, 0, c, W); cx.clip(); gem(c, cy + bob, 46 * u, rot, fillFor('up')); cx.restore();
-      cx.save(); cx.beginPath(); cx.rect(c, 0, c, W); cx.clip(); gem(c, cy + bob, 46 * u, rot, fillFor('down')); cx.restore();
+      cx.save(); cx.beginPath(); cx.rect(0, 0, c, W); cx.clip(); gem(c, cy + bob, 46 * u, rot, fillFor('up'), t); cx.restore();
+      cx.save(); cx.beginPath(); cx.rect(c, 0, c, W); cx.clip(); gem(c, cy + bob, 46 * u, rot, fillFor('down'), t); cx.restore();
       cx.strokeStyle = 'rgba(255,255,255,.7)'; cx.lineWidth = 1.5 * u; cx.beginPath(); cx.moveTo(c, cy - 60 * u + bob); cx.lineTo(c, cy + 50 * u + bob); cx.stroke();
-    } else gem(c, cy + bob, 46 * u, rot, fillFor(mode));
+    } else gem(c, cy + bob, 46 * u, rot, fillFor(mode), t);
+    if (!reduce) orbits(c, cy + bob, 46 * u, t, true);
     cx.shadowBlur = 0;
     // sparkle
     const sp = (Math.sin(t * .003) + 1) / 2; cx.fillStyle = 'rgba(255,255,255,' + (.3 + .6 * sp) + ')';

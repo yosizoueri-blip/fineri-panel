@@ -238,3 +238,11 @@ textarea, input[type=text] { font: inherit; color: var(--fg); background: rgba(0
   .dp-tel { right: -30%; top: 18%; } .dp-hex { right: -28%; bottom: 10%; }
   .dp { font-size: 13px; } .dp-h { font-size: 11px; } .dp .sp { width: 60px; height: 14px; } .dp .row b { min-width: 64px; }
 }
+
+/* the brain sits under the face's skin */
+#brain { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: .8; filter: blur(.6px) saturate(.9); }
+/* bottom panels lean back toward the core */
+.info { transform: perspective(700px) rotateX(20deg); transform-origin: 50% 100%; }
+.dock { transform: perspective(700px) rotateX(26deg); transform-origin: 50% 100%; }
+.dp-race { transform: perspective(420px) rotateY(24deg) rotateX(14deg) skewY(-2deg); }
+.dp-hex { transform: perspective(420px) rotateY(-24deg) rotateX(14deg) skewY(2deg); }
