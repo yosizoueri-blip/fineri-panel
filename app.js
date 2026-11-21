@@ -1,8 +1,9 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '3.23';
+  const VERSION = '3.24';
   const CHANGELOG = [
+    { v: '3.24', d: '2026-11-21', items: ['PCの大きい画面で軽くなるように: 背景の描きこみを減らして、常に動くガラスのぼかしを止めた', 'PCで月の後ろに出ていた四角い光を消した'] },
     { v: '3.23', d: '2026-11-21', items: ['相場の定期報告が出ると真ん中の宝石が黒くなる。押すとオプティマスの報告メモが開いて、元の色に戻る', 'UPDATEのテストに「黒（報告）」ボタン'] },
     { v: '3.22', d: '2026-11-21', items: ['スマホを横向きにしたとき用の並べ方: 真ん中に操作盤、左にデータ、右に時計とボタン'] },
     { v: '3.21', d: '2026-11-21', items: ['顔の絵（アングロ）が休憩時間に目を閉じる: 10:00〜10:15、12:00〜13:00、15:00〜15:15'] },
@@ -146,7 +147,8 @@
 
   /* ---------- canvases ---------- */
   function fit(cv) {
-    const r = cv.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 2);
+    // cap each canvas at ~1.6M pixels so big PC windows don't draw 4x what a phone does
+    const r = cv.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 2, Math.sqrt((r.width * r.height > 6e5 ? 9e5 : 1.6e6) / Math.max(1, r.width * r.height)));
     const w = Math.round(r.width * d), h = Math.round(r.height * d);
     if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
     return d;
@@ -332,15 +334,15 @@
     // the sun and the moon orbit the earth about the screen's X axis with the time of day:
     // they rise from behind the earth's limb, pass over the top at their transit and come down in front.
     // horizontal orbit (seen from slightly above): left at dawn, in front at transit, right at dusk, behind the earth at night
-    const D0 = Math.min(innerWidth * .25 * d, R * .62), Ro = Math.max(R * 1.15, W * .46), yc = top + R * .12;
+    const D0 = Math.min(innerWidth * .25 * d, R * .62), Ro = Math.max(R * 1.15, Math.min(W * .46, R * 1.7)), yc = top + R * .12;
     const orbit = ph => { const z = Math.cos(ph), k = 1 + .25 * z; return { x: gx + Math.sin(ph) * Ro, y: yc + z * R * .16, z, D: D0 * k }; };
     const sun = orbit((hr - 12) / 24 * TAU), moon = orbit((hr - transit) / 24.84 * TAU);
     { const br = earthCv.getBoundingClientRect(); sunAt = [sun.x / d + br.left, sun.y / d + br.top]; }
     const vis = o => o.y - o.D < H && o.y + o.D * 3 > 0;
     const fadeBehind = o => Math.max(0, Math.min(1, 1 + o.z / .45));
     function drawSun(o) { const x = o.x, y = o.y, r = o.D / 2, soft = 1 + cl * 2.2; ex.save(); ex.globalAlpha = fadeBehind(o);
-      const co = ex.createRadialGradient(x, y, r * .6, x, y, r * 4.5 * soft); co.addColorStop(0, 'rgba(255,236,190,' + .6 * (1 - cl * .5) + ')'); co.addColorStop(.25, 'rgba(255,200,120,' + .2 * (1 - cl * .4) + ')'); co.addColorStop(1, 'rgba(255,170,80,0)');
-      ex.fillStyle = co; ex.beginPath(); ex.arc(x, y, r * 4.5 * soft, 0, TAU); ex.fill();
+      const cR = Math.max(r * 1.2, Math.min(r * 4.5 * soft, y)), co = ex.createRadialGradient(x, y, r * .6, x, y, cR); co.addColorStop(0, 'rgba(255,236,190,' + .6 * (1 - cl * .5) + ')'); co.addColorStop(.25, 'rgba(255,200,120,' + .2 * (1 - cl * .4) + ')'); co.addColorStop(1, 'rgba(255,170,80,0)');
+      ex.fillStyle = co; ex.beginPath(); ex.arc(x, y, cR, 0, TAU); ex.fill();
       if (cl < .6 && !reduce) { ex.save(); ex.translate(x, y); ex.rotate(t * .00004); ex.globalCompositeOperation = 'lighter';
         for (let i = 0; i < 12; i++) { ex.rotate(TAU / 12); const L = r * (3 + (i % 3)), g = ex.createLinearGradient(0, 0, L, 0); g.addColorStop(0, 'rgba(255,220,160,' + .12 * (1 - cl / .6) + ')'); g.addColorStop(1, 'rgba(255,220,160,0)');
           ex.fillStyle = g; ex.beginPath(); ex.moveTo(r * .8, -r * .06); ex.lineTo(L, -r * .2); ex.lineTo(L, r * .2); ex.lineTo(r * .8, r * .06); ex.closePath(); ex.fill(); }
@@ -351,9 +353,9 @@
       }
     function drawMoon(o) { const x = o.x, y = o.y, D = o.D, key = Math.round(D0) + ':' + age.toFixed(2);
       if (performance.now() - moonCache.at > 60e3 || moonCache.key !== key) { renderMoon(D0, age, full); moonCache.at = performance.now(); moonCache.key = key; }
-      const day = (sunUp ? .55 : 1) * fadeBehind(o), glow = full ? 'rgba(255,70,80,' : 'rgba(210,225,255,', gr = ex.createRadialGradient(x, y, D * .45, x, y, D * (1.6 + cl));
+      const day = (sunUp ? .55 : 1) * fadeBehind(o), glow = full ? 'rgba(255,70,80,' : 'rgba(210,225,255,', gR = Math.max(D * .6, Math.min(D * (1.6 + cl), y)), gr = ex.createRadialGradient(x, y, D * .45, x, y, gR);
       gr.addColorStop(0, glow + (full ? .6 : .35) * (1 - cl * .5) * day + ')'); gr.addColorStop(1, glow + '0)');
-      ex.fillStyle = gr; ex.beginPath(); ex.arc(x, y, D * (1.6 + cl), 0, TAU); ex.fill();
+      ex.fillStyle = gr; ex.beginPath(); ex.arc(x, y, gR, 0, TAU); ex.fill();
       ex.globalAlpha = (1 - cl * .45) * day; ex.drawImage(moonCache.cv, x - D / 2, y - D / 2, D, D);
       ex.globalCompositeOperation = 'screen'; ex.globalAlpha *= .7; ex.drawImage(moonCache.cv, x - D / 2, y - D / 2, D, D); ex.globalCompositeOperation = 'source-over'; ex.globalAlpha = 1; }
     const bodies = [[sun, drawSun], [moon, drawMoon]].filter(([o]) => vis(o));
@@ -803,7 +805,11 @@
   /* ---------- boot ---------- */
   fetch('graph.json', { cache: 'no-store' }).then(r => r.json()).then(g => { GRAPH = g; layout(); $('stMem').textContent = g.n + 'N / ' + g.e.length + 'L'; }).catch(() => { $('stMem').textContent = '-'; });
   tick(); setInterval(tick, 1000);
-  function frame(t) { drawField(t); drawSky(t); drawEarth(t); drawWeather(t); drawCore(t); if (!reduce) requestAnimationFrame(frame); }
+  // big screens run at ~30fps (every other frame) to keep the PC browser light
+  let odd = false;
+  function frame(t) { if (!reduce) requestAnimationFrame(frame);
+    if (!reduce && innerWidth * innerHeight > 1e6 && (odd = !odd)) return;
+    drawField(t); drawSky(t); drawEarth(t); drawWeather(t); drawCore(t); }
   requestAnimationFrame(frame);
   if (reduce) setInterval(() => frame(performance.now()), 30000);
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});

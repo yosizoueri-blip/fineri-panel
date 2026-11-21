@@ -360,3 +360,11 @@ body.eyes-shut .backdrop .face:not(.shut) { opacity: 0; }
 /* crystal tap target: only active while a weekly report is unseen */
 .gem-btn { position: absolute; left: 50%; top: 50%; width: 22%; aspect-ratio: 1; transform: translate(-50%, -50%); z-index: 3; border: 0; border-radius: 50%; background: none; pointer-events: none; -webkit-tap-highlight-color: transparent; }
 .gem-btn.on { pointer-events: auto; cursor: pointer; }
+
+/* big PC windows: skip the always-on glass blur and the brain blur (they re-blur every frame over the animated background) */
+@media (min-width: 1000px) {
+  :is(.gbtn, .mini) .face, .dp.dp-btn { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  :is(.gbtn, .mini) .face { background: radial-gradient(120% 90% at 30% 20%, hsl(var(--h) 60% 40% / .2), hsl(var(--h) 70% 6% / .28) 70%); }
+  .dp.dp-btn { background: linear-gradient(150deg, hsl(var(--h) 70% 40% / .26), hsl(var(--h) 70% 8% / .45)); }
+  #brain { filter: saturate(.9); }
+}
