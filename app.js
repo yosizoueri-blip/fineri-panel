@@ -1,8 +1,13 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '3.8';
+  const VERSION = '3.9';
   const CHANGELOG = [
+    { v: '3.9', d: '2026-11-21', items: [
+      '戻るときも同じ動き: 丸ボタンから開いたページは、ボタンが画面から戻ってきて元の場所にバタンとはまる',
+      '下のバーから開いたページは、昔のテレビみたいにプツンと切れて戻る',
+      '太陽と月は水平に回る（朝は左、南中で手前、夕方は右、夜は地球のうしろ）',
+    ] },
     { v: '3.8', d: '2026-11-21', items: [
       '下のバーに TRADE を追加（TradingView・PayPay証券・Bitget・bitFlyer・十六銀行）。重なっていた MUMEI と入れ替え',
       '丸ボタンが手前に飛んでくるとき、透けずにしっかり見えるように',
@@ -304,8 +309,9 @@
     $('stSky').textContent = full ? 'FULL MOON' : 'MOON ' + age.toFixed(1);
     // the sun and the moon orbit the earth about the screen's X axis with the time of day:
     // they rise from behind the earth's limb, pass over the top at their transit and come down in front.
-    const D0 = Math.min(innerWidth * .25 * d, R * .62), Ro = R * 1.12;
-    const orbit = ph => { const z = Math.sin(ph), k = 1 + .25 * z; return { x: gx + z * Ro * .35, y: gy - Math.cos(ph) * Ro, z, D: D0 * k }; };
+    // horizontal orbit (seen from slightly above): left at dawn, in front at transit, right at dusk, behind the earth at night
+    const D0 = Math.min(innerWidth * .25 * d, R * .62), Ro = Math.max(R * 1.15, W * .46), yc = top + R * .12;
+    const orbit = ph => { const z = Math.cos(ph), k = 1 + .25 * z; return { x: gx + Math.sin(ph) * Ro, y: yc + z * R * .16, z, D: D0 * k }; };
     const sun = orbit((hr - 12) / 24 * TAU), moon = orbit((hr - transit) / 24.84 * TAU);
     { const br = earthCv.getBoundingClientRect(); sunAt = [sun.x / d + br.left, sun.y / d + br.top]; }
     const vis = o => o.y - o.D < H && o.y + o.D * 3 > 0;
@@ -560,11 +566,27 @@
     sheet.classList.add('open'); veil.classList.add('open'); requestAnimationFrame(() => drawArt(name)); $('closeBtn').focus({ preventScroll: true });
     if (TITLES[name] && name !== 'updates') { usage[name] = (usage[name] || 0) + 1; save('fineri.usage', usage); setTimeout(placeButtons, 400); }
   }
-  function closeMod() { sheet.classList.remove('open'); veil.classList.remove('open'); if (lastFocus) lastFocus.focus({ preventScroll: true }); }
+  let openedBy = null;
+  function closeNow() { sheet.classList.remove('open', 'crt-off'); veil.classList.remove('open'); if (lastFocus) lastFocus.focus({ preventScroll: true, focusVisible: false }); }
+  function closeMod() {
+    const by = openedBy; openedBy = null;
+    if (reduce || !by) { closeNow(); return; }
+    if (by === 'glitch') { // the page cuts out like an old screen switching off
+      sheet.classList.add('crt-off'); veil.classList.remove('open'); setTimeout(closeNow, 340); return; }
+    // the button comes back from the screen and slams into its place
+    const b = by, r = b.getBoundingClientRect(), dx = innerWidth / 2 - (r.left + r.width / 2), dy = innerHeight / 2 - (r.top + r.height / 2), k = Math.max(innerWidth, innerHeight) / r.width * 1.6;
+    sheet.style.transition = 'opacity .12s'; closeNow(); setTimeout(() => { sheet.style.transition = ''; }, 200);
+    b.classList.add('flying'); b.style.zIndex = 50;
+    const hw = b.offsetWidth / 2, hh = b.offsetHeight / 2;
+    const an = b.animate([{ transform: 'translate(' + (dx - hw) + 'px, ' + (dy - hh) + 'px) scale(' + k + ')' }, { transform: 'translate(' + -hw + 'px, ' + -hh + 'px) scale(1)' }],
+      { duration: 420, easing: 'cubic-bezier(.55,0,.6,1)' });
+    an.onfinish = () => { b.classList.remove('flying'); b.style.zIndex = '';
+      b.animate([{ transform: 'translate(-50%, -50%) scale(.86)' }, { transform: 'translate(-50%, -50%) scale(1.06)', offset: .45 }, { transform: 'translate(-50%, -50%) scale(1)' }], { duration: 260, easing: 'ease-out' }); };
+  }
   document.addEventListener('click', e => {
     const o = e.target.closest('[data-open]');
     if (o && o.classList.contains('gbtn') && !reduce) { zoomOpen(o); return; }
-    if (o && o.closest('.dock')) { glitch(() => openMod(o.dataset.open, o)); return; }
+    if (o && o.closest('.dock')) { glitch(() => { openMod(o.dataset.open, o); openedBy = 'glitch'; }); return; }
     if (o) { openMod(o.dataset.open, o); return; }
     const h = e.target.closest('[data-href]'); if (h) { const go = () => { location.href = h.dataset.href; }; h.closest('.dock') ? glitch(go) : go(); }
   });
@@ -599,7 +621,7 @@
     b.style.zIndex = 50; b.classList.add('flying'); b.style.transition = 'transform .5s cubic-bezier(.5,0,.75,0), opacity .12s ease-in .38s';
     b.style.transform = 'translate(calc(-50% + ' + dx + 'px), calc(-50% + ' + dy + 'px)) scale(' + k + ')'; b.style.opacity = '0';
     document.body.classList.add('zooming');
-    setTimeout(() => { openMod(b.dataset.open, b);
+    setTimeout(() => { openMod(b.dataset.open, b); openedBy = b;
       b.style.transition = 'none'; b.style.transform = ''; b.style.opacity = ''; b.style.zIndex = ''; b.classList.remove('flying');
       requestAnimationFrame(() => { b.style.transition = ''; document.body.classList.remove('zooming'); zooming = false; }); }, 480);
   }
