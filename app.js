@@ -1,8 +1,9 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '3.12';
+  const VERSION = '3.13';
   const CHANGELOG = [
+    { v: '3.13', d: '2026-11-21', items: ['顔の絵を下げて、紅いオプティマスが上の COLOR ボタンにかからないように'] },
     { v: '3.12', d: '2026-11-21', items: [
       '下のバーのノイズをさらに半分に',
       '下のバーのボタンもメインと同じ歯車＋枠＋ガラス',

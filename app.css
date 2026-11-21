@@ -235,7 +235,7 @@ a.card:hover, a.card:focus-visible { background: linear-gradient(90deg, hsl(var(
 /* faint artwork under the glass: eerie + modern */
 .backdrop { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
 .backdrop i { position: absolute; left: 50%; transform: translateX(-50%); background: center / cover no-repeat; opacity: .62; filter: saturate(.9) contrast(1.1); }
-.backdrop .face { --fw: min(150vw, 110dvh, 1100px); width: var(--fw); aspect-ratio: 900 / 1072; top: calc(var(--fw) * -0.176); background-image: url(bg-face.webp);
+.backdrop .face { --fw: min(150vw, 110dvh, 1100px); width: var(--fw); aspect-ratio: 900 / 1072; top: calc(var(--fw) * -0.05); background-image: url(bg-face.webp);
   -webkit-mask-image: radial-gradient(ellipse 50% 52% at 50% 36%, #000 62%, transparent); mask-image: radial-gradient(ellipse 50% 52% at 50% 36%, #000 62%, transparent); }
 .sunlight { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 3s;
   background: radial-gradient(circle at var(--sx, 30%) var(--sy, 10%), rgba(255,214,160,.16), rgba(255,190,120,.06) 35%, transparent 70%),
