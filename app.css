@@ -191,7 +191,7 @@ textarea, input[type=text] { font: inherit; color: var(--fg); background: rgba(0
 /* earth under the buttons */
 .earth { position: absolute; z-index: 0; pointer-events: none; left: calc(50% - 50vw); right: calc(50% - 50vw);
   bottom: -30px; height: 42%; }
-#earth { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .55;
+#earth { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .3;
   -webkit-mask-image: linear-gradient(transparent, #000 18%, #000 94%, transparent); mask-image: linear-gradient(transparent, #000 18%, #000 94%, transparent); }
 
 /* faint artwork under the glass: eerie + modern */

@@ -1,8 +1,9 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '3.0';
+  const VERSION = '3.1';
   const CHANGELOG = [
+    { v: '3.1', d: '2026-11-21', items: ['中央のオプティマスと地球・太陽・月をさらに薄く'] },
     { v: '3.0', d: '2026-11-21', items: ['地球・太陽・月を薄くして背景になじませた（メイン画面 完成）'] },
     { v: '2.9', d: '2026-11-21', items: [
       '地球をNASAの衛星写真ベースに（山の陰影、雲、夜側の街の灯り）',
@@ -194,7 +195,7 @@
     // 2) its reflection: the ring around the core, wired into the crystal (the crystal is fineri, the hub note)
     const ld = fit(linkCv), LW = linkCv.width, lc = LW / 2; lx.clearRect(0, 0, LW, LW);
     lx.save(); lx.beginPath(); lx.rect(0, 0, LW, LW); lx.arc(lc, lc, LW * .085, 0, TAU, true); lx.clip();
-    lx.globalAlpha = .42;
+    lx.globalAlpha = .22;
     drawGraph(lx, ld, place(ring, lc, lc, LW, LW, rot * .6, t), Math.max(.7, Math.min(1.2, LW / ld / 380)), LW * .45, col, t);
     lx.globalAlpha = 1; lx.restore();
   }
