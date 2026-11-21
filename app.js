@@ -1,8 +1,12 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '3.5';
+  const VERSION = '3.6';
   const CHANGELOG = [
+    { v: '3.6', d: '2026-11-21', items: [
+      '太陽と月は交代で地球の左のふちに出る。昼は太陽だけ、夜は月だけ（見えている満ち欠けのまま）。時間とともに少しずつふちを動く',
+      '晴れの日は太陽から光の筋',
+      '天気を背景にうっすら表現：曇りはくすんだ空、雨は細い雨すじ、雪は舞う雪、霧はもや、雷雨はたまに稲光'] },
     { v: '3.5', d: '2026-11-21', items: ['下のバーに X と GAMES を追加（GAMES の中身はこれから）'] },
     { v: '3.4', d: '2026-11-21', items: ['歯車の歯を中くらいの高さの台形に。縁にふちどりと影を入れて立体的に', 'ボタンを押すと、ボタンが真ん中で大きくなってからページが開くように'] },
     { v: '3.3', d: '2026-11-21', items: ['ボタンは中だけガラスに。外の歯車と縁は金属に戻した', '歯車の歯を高く、角を立てた'] },
@@ -217,14 +221,6 @@
     const d = fit(sky), W = sky.width, H = sky.height; sx.clearRect(0, 0, W, H);
     const n = jst(), hr = n.getUTCHours() + n.getUTCMinutes() / 60 + n.getUTCSeconds() / 3600;
     const [rise, set] = sunTimes(n); const sf = (hr - rise) / (set - rise);
-    // weather: drifting cloud veils and a few rain streaks, only as strong as the sky really is
-    if (wx.cloud > .3) for (let i = 0; i < 5; i++) {
-      const cx = ((i * .27 + t * .000008 * (1 + i * .3)) % 1.3 - .15) * W, cy = H * (.18 + (i % 3) * .14), rw = W * (.22 + (i % 2) * .1);
-      const g = sx.createRadialGradient(cx, cy, 0, cx, cy, rw); g.addColorStop(0, 'rgba(150,170,195,' + (.16 * (wx.cloud - .3) / .7) + ')'); g.addColorStop(1, 'rgba(150,170,195,0)');
-      sx.fillStyle = g; sx.save(); sx.translate(cx, cy); sx.scale(1, .32); sx.translate(-cx, -cy); sx.beginPath(); sx.arc(cx, cy, rw, 0, TAU); sx.fill(); sx.restore();
-    }
-    if (wx.rain && !reduce) { sx.strokeStyle = 'rgba(170,200,230,.22)'; sx.lineWidth = 1 * d; sx.beginPath();
-      for (let i = 0; i < 26; i++) { const x = ((i * 97.3 + t * .05) % W), y = ((i * 53.1 + t * .6) % (H * 1.1)) - H * .05; sx.moveTo(x, y); sx.lineTo(x - 3 * d, y + 12 * d); } sx.stroke(); }
   }
   /* sunlight: when the sky is clear a warm light falls across the panel from the sun's side */
   let sunAt = null, lightN = 0; const lightEl = document.querySelector('.sunlight');
@@ -295,17 +291,31 @@
     const age = moonAge(Date.now()), transit = 12 + age * 24 / 29.530588853, mf = ((hr - (transit - 6.2)) % 24 + 24) % 24 / 12.4, moonUp = mf > 0 && mf < 1;
     const full = Math.abs(age - 14.77) < 1.0;
     $('stSky').textContent = full ? 'FULL MOON' : 'MOON ' + age.toFixed(1);
-    const D = Math.min(innerWidth * .25 * d, R * .62), ang = Math.PI * .84;
-    const sun = [gx + Math.cos(ang) * R * .97, gy - Math.sin(ang) * R * .97], moon = [gx - Math.cos(ang) * R * .97, gy - Math.sin(ang) * R * .97];
-    // sun (behind the earth): corona, limb-darkened disc; clouds soften it
-    { const [x, y] = sun, r = D / 2, on = sunUp ? 1 : .25, soft = 1 + cl * 2.2;
-      const co = ex.createRadialGradient(x, y, r * .6, x, y, r * 4.5 * soft); co.addColorStop(0, 'rgba(255,236,190,' + .55 * on + ')'); co.addColorStop(.25, 'rgba(255,200,120,' + .18 * on + ')'); co.addColorStop(1, 'rgba(255,170,80,0)');
+    // one body at a time on the earth's left limb: the sun by day, the moon (its real phase, as seen from here) by night.
+    // It eases slowly along the limb through the day or night.
+    const D = Math.min(innerWidth * .25 * d, R * .62), body = sunUp ? 'sun' : moonUp ? 'moon' : null;
+    const f = Math.max(0, Math.min(1, body === 'sun' ? (hr - rise) / (set - rise) : mf)), th = Math.PI * (.84 - .08 * Math.sin(f * Math.PI));
+    const bx0 = gx + Math.cos(th) * R * 1.04, by0 = gy - Math.sin(th) * R * 1.04;
+    if (body === 'sun') { const x = bx0, y = by0, r = D / 2, soft = 1 + cl * 2.2;
+      const co = ex.createRadialGradient(x, y, r * .6, x, y, r * 4.5 * soft); co.addColorStop(0, 'rgba(255,236,190,' + .6 * (1 - cl * .5) + ')'); co.addColorStop(.25, 'rgba(255,200,120,' + .2 * (1 - cl * .4) + ')'); co.addColorStop(1, 'rgba(255,170,80,0)');
       ex.fillStyle = co; ex.beginPath(); ex.arc(x, y, r * 4.5 * soft, 0, TAU); ex.fill();
-      const a = (1 - cl * .5) * (sunUp ? 1 : .35), disc = ex.createRadialGradient(x - r * .1, y - r * .1, 0, x, y, r * (1 + cl * .8));
+      // slow god-rays when the sky is clear
+      if (cl < .6 && !reduce) { ex.save(); ex.translate(x, y); ex.rotate(t * .00004); ex.globalCompositeOperation = 'lighter';
+        for (let i = 0; i < 12; i++) { ex.rotate(TAU / 12); const L = r * (3 + (i % 3)) , g = ex.createLinearGradient(0, 0, L, 0); g.addColorStop(0, 'rgba(255,220,160,' + .12 * (1 - cl / .6) + ')'); g.addColorStop(1, 'rgba(255,220,160,0)');
+          ex.fillStyle = g; ex.beginPath(); ex.moveTo(r * .8, -r * .06); ex.lineTo(L, -r * .2); ex.lineTo(L, r * .2); ex.lineTo(r * .8, r * .06); ex.closePath(); ex.fill(); }
+        ex.restore(); }
+      const a = 1 - cl * .55, disc = ex.createRadialGradient(x - r * .1, y - r * .1, 0, x, y, r * (1 + cl * .8));
       disc.addColorStop(0, 'rgba(255,255,245,' + a + ')'); disc.addColorStop(.55, 'rgba(255,240,190,' + a + ')'); disc.addColorStop(Math.max(.6, .93 - cl * .3), 'rgba(255,190,90,' + a + ')'); disc.addColorStop(1, 'rgba(255,170,60,0)');
       ex.fillStyle = disc; ex.beginPath(); ex.arc(x, y, r * (1 + cl * .8), 0, TAU); ex.fill();
-      const br = earthCv.getBoundingClientRect(); sunAt = [x / d + br.left, y / d + br.top]; lightTick(sunUp); }
-    // earth
+      const br = earthCv.getBoundingClientRect(); sunAt = [x / d + br.left, y / d + br.top]; }
+    lightTick(body === 'sun');
+    if (body === 'moon') { const x = bx0, y = by0, key = Math.round(D) + ':' + age.toFixed(2);
+      if (performance.now() - moonCache.at > 60e3 || moonCache.key !== key) { renderMoon(D, age, full); moonCache.at = performance.now(); moonCache.key = key; }
+      const glow = full ? 'rgba(255,70,80,' : 'rgba(210,225,255,', gr = ex.createRadialGradient(x, y, D * .45, x, y, D * (1.6 + cl));
+      gr.addColorStop(0, glow + (full ? .6 : .35) * (1 - cl * .5) + ')'); gr.addColorStop(1, glow + '0)');
+      ex.fillStyle = gr; ex.beginPath(); ex.arc(x, y, D * (1.6 + cl), 0, TAU); ex.fill();
+      ex.globalAlpha = 1 - cl * .45; ex.drawImage(moonCache.cv, x - D / 2, y - D / 2, D, D); ex.globalAlpha = 1; }
+    // earth (in front: the body rises from behind its limb)
     if (tex.earth && tex.clouds) {
       const key = Math.round(R) + 'x' + Math.round(H - top);
       if (performance.now() - earthCache.at > 1500 || earthCache.key !== key) { renderEarth(R, top, H); earthCache.at = performance.now(); earthCache.key = key; }
@@ -313,13 +323,29 @@
     }
     const atm = ex.createRadialGradient(gx, gy, R * .97, gx, gy, R * 1.08); atm.addColorStop(0, 'rgba(120,180,255,.5)'); atm.addColorStop(1, 'rgba(120,180,255,0)');
     ex.fillStyle = atm; ex.beginPath(); ex.arc(gx, gy, R * 1.08, 0, TAU); ex.fill();
-    // moon (in front of the earth): real phase; red at full moon
-    { const [x, y] = moon, on = moonUp ? 1 : .45, key = Math.round(D) + ':' + age.toFixed(2);
-      if (performance.now() - moonCache.at > 60e3 || moonCache.key !== key) { renderMoon(D, age, full); moonCache.at = performance.now(); moonCache.key = key; }
-      const glow = full ? 'rgba(255,70,80,' : 'rgba(210,225,255,', gr = ex.createRadialGradient(x, y, D * .45, x, y, D * (1.4 + cl));
-      gr.addColorStop(0, glow + (moonUp ? (full ? .55 : .3) : .08) * (1 - cl * .5) + ')'); gr.addColorStop(1, glow + '0)');
-      ex.fillStyle = gr; ex.beginPath(); ex.arc(x, y, D * (1.4 + cl), 0, TAU); ex.fill();
-      ex.globalAlpha = on * (1 - cl * .35); ex.drawImage(moonCache.cv, x - D / 2, y - D / 2, D, D); ex.globalAlpha = 1; }
+  }
+
+  /* ---------- weather layer: real conditions, drawn faintly over the background ---------- */
+  const wxCv = $('wxfx'), wg = wxCv.getContext('2d'); let flash = 0, nextFlash = 0;
+  const drops = Array.from({ length: 90 }, (_, i) => ({ x: Math.random(), y: Math.random(), s: .6 + Math.random() * .8, w: Math.random() }));
+  function drawWeather(t) {
+    const d = fit(wxCv), W = wxCv.width, H = wxCv.height; wg.clearRect(0, 0, W, H); const c = wx.code;
+    const rain = (c >= 51 && c <= 67) || (c >= 80 && c <= 82) || c >= 95, snow = (c >= 71 && c <= 77) || c === 85 || c === 86, storm = c >= 95, fog = c === 45 || c === 48;
+    // overcast: a cool veil that settles over the top of the screen
+    if (wx.cloud > .5) { const g = wg.createLinearGradient(0, 0, 0, H * .7); g.addColorStop(0, 'rgba(120,135,155,' + .16 * (wx.cloud - .5) / .5 + ')'); g.addColorStop(1, 'rgba(120,135,155,0)'); wg.fillStyle = g; wg.fillRect(0, 0, W, H); }
+    // fog: slow drifting mist bands low on the screen
+    if (fog) for (let i = 0; i < 4; i++) { const y = H * (.55 + i * .1), x = ((t * .00001 * (i + 1) + i * .3) % 1) * W * 1.6 - W * .3, g = wg.createRadialGradient(x, y, 0, x, y, W * .6);
+      g.addColorStop(0, 'rgba(190,200,210,.10)'); g.addColorStop(1, 'rgba(190,200,210,0)'); wg.save(); wg.translate(x, y); wg.scale(1, .25); wg.translate(-x, -y); wg.fillStyle = g; wg.beginPath(); wg.arc(x, y, W * .6, 0, TAU); wg.fill(); wg.restore(); }
+    if (reduce) return;
+    // rain: fine slanted streaks; snow: soft drifting flakes
+    if (rain) { wg.strokeStyle = 'rgba(180,205,235,.16)'; wg.lineWidth = 1 * d; wg.beginPath();
+      drops.forEach(p => { p.y += .012 * p.s; p.x -= .002 * p.s; if (p.y > 1.05) { p.y = -.05; p.x = Math.random() * 1.1; } if (p.x < -.05) p.x += 1.1;
+        const x = p.x * W, y = p.y * H, L = (10 + 10 * p.s) * d; wg.moveTo(x, y); wg.lineTo(x - L * .18, y + L); }); wg.stroke(); }
+    if (snow) { wg.fillStyle = 'rgba(235,242,255,.5)';
+      drops.forEach(p => { p.y += .0012 * p.s; p.x += Math.sin(t * .001 + p.w * 9) * .0004; if (p.y > 1.02) { p.y = -.02; p.x = Math.random(); }
+        wg.beginPath(); wg.arc(p.x * W, p.y * H, (1 + p.s * 1.4) * d, 0, TAU); wg.fill(); }); }
+    // thunder: a rare, soft flash
+    if (storm) { if (t > nextFlash) { flash = 1; nextFlash = t + 7000 + Math.random() * 9000; } if (flash > .01) { wg.fillStyle = 'rgba(200,215,255,' + .12 * flash + ')'; wg.fillRect(0, 0, W, H); flash *= .86; } }
   }
 
   /* ---------- core: rings + crystal ---------- */
@@ -610,7 +636,7 @@
   /* ---------- boot ---------- */
   fetch('graph.json', { cache: 'no-store' }).then(r => r.json()).then(g => { GRAPH = g; layout(); $('stMem').textContent = g.n + 'N / ' + g.e.length + 'L'; }).catch(() => { $('stMem').textContent = '-'; });
   tick(); setInterval(tick, 1000);
-  function frame(t) { drawField(t); drawSky(t); drawEarth(t); drawCore(t); if (!reduce) requestAnimationFrame(frame); }
+  function frame(t) { drawField(t); drawSky(t); drawEarth(t); drawWeather(t); drawCore(t); if (!reduce) requestAnimationFrame(frame); }
   requestAnimationFrame(frame);
   if (reduce) setInterval(() => frame(performance.now()), 30000);
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
