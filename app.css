@@ -83,13 +83,13 @@ button { font: inherit; }
 #links { z-index: 1; }
 .gbtn { position: absolute; z-index: 3; width: 21%; aspect-ratio: 1; transform: translate(-50%, -50%); border: 0; padding: 0; background: none; cursor: pointer; color: var(--fg);
   transition: left .9s cubic-bezier(.2,.8,.2,1), top .9s cubic-bezier(.2,.8,.2,1);
-  filter: drop-shadow(0 0 6px hsl(var(--h) 100% 60% / .3)); }
-.gbtn .gear { position: absolute; inset: 0; background: conic-gradient(from 210deg, hsl(var(--h) 20% 70% / .35), hsl(var(--h) 15% 30% / .12), hsl(var(--h) 25% 75% / .35), hsl(var(--h) 15% 30% / .1), hsl(var(--h) 20% 70% / .35));
+  filter: drop-shadow(0 6px 8px rgba(0,0,0,.7)) drop-shadow(0 0 8px hsl(var(--h) 100% 60% / .35)); }
+.gbtn .gear { position: absolute; inset: 0; background: conic-gradient(from 210deg, hsl(var(--h) 20% 55%), hsl(var(--h) 15% 18%), hsl(var(--h) 25% 60%), hsl(var(--h) 15% 14%), hsl(var(--h) 20% 55%));
   animation: turn 40s linear infinite; }
 .gbtn:nth-child(even) .gear { animation-direction: reverse; }
 @keyframes turn { to { transform: rotate(360deg) } }
 .gbtn .rim { position: absolute; inset: 9%; clip-path: polygon(29.3% 0, 70.7% 0, 100% 29.3%, 100% 70.7%, 70.7% 100%, 29.3% 100%, 0 70.7%, 0 29.3%);
-  background: linear-gradient(145deg, hsl(var(--h) 60% 85% / .5), hsl(var(--h) 50% 45% / .15) 30%, hsl(var(--h) 60% 20% / .08) 70%, hsl(var(--h) 50% 50% / .3)); }
+  background: linear-gradient(145deg, hsl(var(--h) 60% 80%), hsl(var(--h) 50% 35%) 30%, hsl(var(--h) 60% 10%) 70%, hsl(var(--h) 50% 30%)); }
 .gbtn .face { position: absolute; inset: 14%; clip-path: polygon(29.3% 0, 70.7% 0, 100% 29.3%, 100% 70.7%, 70.7% 100%, 29.3% 100%, 0 70.7%, 0 29.3%);
   background: radial-gradient(120% 90% at 30% 20%, hsl(var(--h) 60% 40% / .14), hsl(var(--h) 70% 6% / .1) 70%); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
   display: grid; place-content: center; justify-items: center; gap: 1px;

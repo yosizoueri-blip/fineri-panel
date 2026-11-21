@@ -1,8 +1,9 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '3.2';
+  const VERSION = '3.3';
   const CHANGELOG = [
+    { v: '3.3', d: '2026-11-21', items: ['ボタンは中だけガラスに。外の歯車と縁は金属に戻した', '歯車の歯を高く、角を立てた'] },
     { v: '3.2', d: '2026-11-21', items: ['中央のオプティマスの点を小さく、さらに暗く', 'ボタンをほぼ透明なガラスに'] },
     { v: '3.1', d: '2026-11-21', items: ['中央のオプティマスと地球・太陽・月をさらに薄く'] },
     { v: '3.0', d: '2026-11-21', items: ['地球・太陽・月を薄くして背景になじませた（メイン画面 完成）'] },
@@ -448,7 +449,7 @@
   const LABELS = [['talk', 'MUMEI'], ['market', 'MARKET'], ['keiba', 'RACING'], ['tasks', 'TASKS'], ['memory', 'MEMORY'], ['forest', 'FOREST']];
   const BTNS = [];
   let usage = load('fineri.usage', {});
-  const gearPath = (() => { const n = 16, pts = []; for (let i = 0; i < n * 4; i++) { const a = i / (n * 4) * TAU, r = (i % 4 < 2) ? 50 : 45.5; pts.push((50 + r * Math.cos(a)).toFixed(2) + '% ' + (50 + r * Math.sin(a)).toFixed(2) + '%'); } return 'polygon(' + pts.join(',') + ')'; })();
+  const gearPath = (() => { const n = 16, pts = []; for (let i = 0; i < n * 4; i++) { const k = i % 4, a = (Math.floor(i / 4) + [0, .04, .46, .5][k]) / n * TAU, r = (k === 1 || k === 2) ? 50 : 41; pts.push((50 + r * Math.cos(a)).toFixed(2) + '% ' + (50 + r * Math.sin(a)).toFixed(2) + '%'); } return 'polygon(' + pts.join(',') + ')'; })();
   const stage = $('stage');
   LABELS.forEach(([key, label], i) => {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'gbtn'; b.dataset.open = key; b.setAttribute('aria-label', label);
