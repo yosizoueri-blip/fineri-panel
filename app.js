@@ -1,8 +1,9 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '3.34';
+  const VERSION = '3.35';
   const CHANGELOG = [
+    { v: '3.35', d: '2026-11-22', items: ['スマホ横: PCと同じ並びに戻した（下のボタンは真ん中、時計は右の操作盤）。宝石を下げすぎていたのを直した'] },
     { v: '3.34', d: '2026-11-22', items: ['アングロの目と鼻筋が見えるように: PCは時計を右の操作盤に移して宝石を下げた、スマホ横は顔を大きくして宝石をさらに下げた'] },
     { v: '3.33', d: '2026-11-22', items: ['PC: 宝石まわりのシナプスの線を太く、点を大きく。ボタンの文字が切れないように', 'スマホ横: 時計を右、下のボタンを左の操作盤に入れて、宝石を下げた。アングロの顔と目が見えるように'] },
     { v: '3.32', d: '2026-11-22', items: ['PC: 両サイドを画面の端に寄せて細くし、アングロの顔が見えるように。ガラスも少し明るく', 'PC: 宝石まわりのシナプスを濃く', 'スマホ横: 右のパネルがボタンや時計にかぶらないように（iPhoneの切り欠き分も考える）'] },
@@ -811,7 +812,7 @@
     // phone held sideways: the clock goes to the top of the right console and the dock to the bottom of the left one,
     // so the gem can sit lower and アングロ's face shows
     const mqL = matchMedia('(orientation: landscape) and (max-height: 600px) and (min-width: 640px)');
-    const moves = [['.info', Rr, 'start'], ['.dock', L, 'end']].map(([s, side, at]) => { const el = document.querySelector(s); return { el, side, at, parent: el.parentNode, next: el.nextSibling }; });
+    const moves = [['.info', Rr, 'start']].map(([s, side, at]) => { const el = document.querySelector(s); return { el, side, at, parent: el.parentNode, next: el.nextSibling }; });
     const placeL = () => moves.forEach(m => { if (mqL.matches || (m.at === 'start' && mq.matches)) { m.at === 'start' ? m.side.prepend(m.el) : m.side.append(m.el); } else if (m.el.parentNode !== m.parent) m.parent.insertBefore(m.el, m.next); });
     placeL(); mqL.addEventListener('change', placeL); mq.addEventListener('change', placeL);
     // decorative values for the PC-only panels

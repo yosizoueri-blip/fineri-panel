@@ -562,3 +562,10 @@ body.eyes-shut .backdrop .face:not(.shut) { opacity: 0; }
 }
 @media (min-width: 1100px) and (min-height: 601px) and (max-height: 900px) { .sky { height: 33dvh; } .pc-side .info .t { font-size: 30px; } }
 @media (min-width: 1100px) and (min-height: 601px) { .pc-side .info .clk .dp-h { display: none; } }
+
+/* phone sideways v3: same arrangement as the PC (clock in the right console, dock in the centre), gem not pushed so far down */
+@media (orientation: landscape) and (max-height: 600px) and (min-width: 640px) {
+  .backdrop .face { --fw: 110dvh; top: calc(var(--fw) * -0.26); }
+  .mid { margin-top: calc(25dvh - 30px); margin-bottom: 0; }
+  .pc-side .dp-race { display: block; }
+}
