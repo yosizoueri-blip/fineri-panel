@@ -84,20 +84,20 @@ button { font: inherit; }
 .gbtn { position: absolute; z-index: 3; width: 21%; aspect-ratio: 1; transform: translate(-50%, -50%); border: 0; padding: 0; background: none; cursor: pointer; color: var(--fg);
   transition: left .9s cubic-bezier(.2,.8,.2,1), top .9s cubic-bezier(.2,.8,.2,1);
   filter: drop-shadow(0 6px 8px rgba(0,0,0,.7)) drop-shadow(0 0 8px hsl(var(--h) 100% 60% / .35)); }
-.gbtn .gear { position: absolute; inset: 0; background:
+:is(.gbtn, .mini) .gear { position: absolute; inset: 0; background:
     radial-gradient(circle closest-side, rgba(0,0,0,.45) 84%, transparent 87.5%, rgba(255,255,255,.45) 89.5%, rgba(255,255,255,.08) 95%, rgba(0,0,0,.55) 100%),
     conic-gradient(from 210deg, hsl(var(--h) 20% 55%), hsl(var(--h) 15% 18%), hsl(var(--h) 25% 60%), hsl(var(--h) 15% 14%), hsl(var(--h) 20% 55%));
   animation: turn 40s linear infinite; }
 .gbtn:nth-child(even) .gear { animation-direction: reverse; }
 @keyframes turn { to { transform: rotate(360deg) } }
-.gbtn .rim { position: absolute; inset: 9%; clip-path: polygon(29.3% 0, 70.7% 0, 100% 29.3%, 100% 70.7%, 70.7% 100%, 29.3% 100%, 0 70.7%, 0 29.3%);
+:is(.gbtn, .mini) .rim { position: absolute; inset: 9%; clip-path: polygon(29.3% 0, 70.7% 0, 100% 29.3%, 100% 70.7%, 70.7% 100%, 29.3% 100%, 0 70.7%, 0 29.3%);
   background: linear-gradient(145deg, hsl(var(--h) 60% 80%), hsl(var(--h) 50% 35%) 30%, hsl(var(--h) 60% 10%) 70%, hsl(var(--h) 50% 30%)); }
-.gbtn .face { position: absolute; inset: 14%; clip-path: polygon(29.3% 0, 70.7% 0, 100% 29.3%, 100% 70.7%, 70.7% 100%, 29.3% 100%, 0 70.7%, 0 29.3%);
+:is(.gbtn, .mini) .face { position: absolute; inset: 14%; clip-path: polygon(29.3% 0, 70.7% 0, 100% 29.3%, 100% 70.7%, 70.7% 100%, 29.3% 100%, 0 70.7%, 0 29.3%);
   background: radial-gradient(120% 90% at 30% 20%, hsl(var(--h) 60% 40% / .14), hsl(var(--h) 70% 6% / .1) 70%); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
   display: grid; place-content: center; justify-items: center; gap: 1px;
   box-shadow: inset 0 0 0 1px hsl(var(--h) 100% 70% / .5); }
-.gbtn .face::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255,255,255,.1), transparent 45%); pointer-events: none; }
-.gbtn .face::after { content: ""; position: absolute; left: 30%; right: 30%; top: 6%; height: 2px; background: var(--c); box-shadow: 0 0 8px var(--c); }
+:is(.gbtn, .mini) .face::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255,255,255,.1), transparent 45%); pointer-events: none; }
+:is(.gbtn, .mini) .face::after { content: ""; position: absolute; left: 30%; right: 30%; top: 6%; height: 2px; background: var(--c); box-shadow: 0 0 8px var(--c); }
 .gbtn svg { width: clamp(16px, 5.4vw, 26px); height: auto; stroke: var(--c2); fill: none; stroke-width: 1.7; filter: drop-shadow(0 0 4px var(--c)); }
 .gbtn span { font-size: clamp(9px, 2.7vw, 12px); font-weight: 700; letter-spacing: .02em; text-shadow: 0 0 6px #000, 0 0 2px #000; }
 .gbtn:hover .gear, .gbtn:focus-visible .gear { animation-duration: 6s; }
@@ -230,7 +230,7 @@ a.card:hover, a.card:focus-visible { background: linear-gradient(90deg, hsl(var(
 .earth { position: absolute; z-index: 0; pointer-events: none; left: calc(50% - 50vw); right: calc(50% - 50vw);
   bottom: -30px; height: 42%; }
 #earth { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .42;
-  -webkit-mask-image: linear-gradient(transparent, #000 6%, #000 94%, transparent); mask-image: linear-gradient(transparent, #000 6%, #000 94%, transparent); }
+  -webkit-mask-image: linear-gradient(transparent, #000 5%, #000 97%, transparent); mask-image: linear-gradient(transparent, #000 5%, #000 97%, transparent); }
 
 /* faint artwork under the glass: eerie + modern */
 .backdrop { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
@@ -311,5 +311,22 @@ body.glitching .app, body.glitching .sheet.open { transform: translateX(var(--gx
 .gbtn.slam { animation: slam .26s ease-out; }
 @keyframes slam { 0% { transform: translate(-50%, -50%) scale(.86) } 45% { transform: translate(-50%, -50%) scale(1.06) } 100% { transform: translate(-50%, -50%) scale(1) } }
 /* v3.11: the rim is a frame only, so the face shows what's behind it like glass */
-.gbtn .rim { padding: 6.2%; -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
-.gbtn .gear { -webkit-mask: radial-gradient(circle closest-side, transparent 72%, #000 74%); mask: radial-gradient(circle closest-side, transparent 72%, #000 74%); }
+:is(.gbtn, .mini) .rim { padding: 6.2%; -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
+:is(.gbtn, .mini) .gear { -webkit-mask: radial-gradient(circle closest-side, transparent 72%, #000 74%); mask: radial-gradient(circle closest-side, transparent 72%, #000 74%); }
+
+/* v3.12 */
+.dock { background: linear-gradient(0deg, hsl(var(--h) 60% 8% / .35), transparent); }
+.dock i.mini { position: relative; width: 46px; height: 46px; display: block; border: 0; background: none; box-shadow: none; clip-path: none;
+  filter: drop-shadow(0 3px 4px rgba(0,0,0,.7)) drop-shadow(0 0 5px hsl(var(--h) 100% 60% / .3)); }
+.dock i.mini .face { display: grid; place-items: center; }
+.dock i.mini svg { width: 18px; height: 18px; stroke: hsl(var(--h) 35% 80%); filter: drop-shadow(0 0 3px var(--c)); }
+.dock i.mini .face::after { left: 34%; right: 34%; height: 1.5px; }
+.dock button:hover i.mini { background: none; } .dock button:hover i.mini .gear { animation-duration: 6s; }
+.dock button { color: hsl(var(--h) 18% 78%); }
+/* panels with real content look like buttons */
+.dp.dp-btn { border: 1px solid hsl(var(--h) 90% 65% / .5); pointer-events: auto; cursor: pointer;
+  background: linear-gradient(150deg, hsl(var(--h) 70% 40% / .22), hsl(var(--h) 70% 8% / .3)); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+  box-shadow: inset 0 1px 0 hsl(var(--h) 100% 80% / .35), inset 0 0 12px hsl(var(--h) 90% 55% / .18), 0 0 10px hsl(var(--h) 90% 55% / .2); }
+.dp.dp-btn::before { width: 30%; left: 35%; right: auto; }
+.dp.dp-btn[data-open]:hover, .dp.dp-btn[data-open]:focus-visible { box-shadow: inset 0 1px 0 hsl(var(--h) 100% 80% / .5), inset 0 0 16px hsl(var(--h) 90% 55% / .3), 0 0 16px hsl(var(--h) 90% 55% / .4); }
+.dp-race.dp-btn { max-width: 56%; } .dp-race .row { flex-wrap: nowrap; }

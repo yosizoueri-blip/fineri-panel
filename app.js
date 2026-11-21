@@ -1,8 +1,15 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '3.11';
+  const VERSION = '3.12';
   const CHANGELOG = [
+    { v: '3.12', d: '2026-11-21', items: [
+      '下のバーのノイズをさらに半分に',
+      '下のバーのボタンもメインと同じ歯車＋枠＋ガラス',
+      '地球が時計と下のバーの裏まで続くように',
+      'BTC はドル表示に',
+      '中身のあるデータパネル（SYS・MKT・TURF）はボタンみたいな枠つき。MKT と TURF は押すと相場・競馬のページへ',
+    ] },
     { v: '3.11', d: '2026-11-21', items: ['丸ボタンが手前に来るとき、歯車と枠はそのままで中をガラスっぽく透かす', '丸ボタンの文字とアイコンの彩度を落とした'] },
     { v: '3.10', d: '2026-11-21', items: ['下のバーで開くときのノイズを短く（約0.56秒→0.28秒）'] },
     { v: '3.9', d: '2026-11-21', items: [
@@ -302,8 +309,10 @@
     g.putImageData(img, 0, 0);
   }
   function drawEarth(t) {
-    const d = fit(earthCv), W = earthCv.width, H = earthCv.height; ex.clearRect(0, 0, W, H);
-    const R = Math.min(W * .43, H * 1.05), gx = W / 2, gy = H * .3 + R, top = gy - R;
+    const ed = earthCv.parentElement, mid = ed.parentElement, mr = mid.getBoundingClientRect(), below = Math.max(30, Math.round(innerHeight - mr.bottom));
+    if (ed.dataset.below !== String(below)) { ed.dataset.below = below; ed.style.bottom = -below + 'px'; ed.style.height = 'calc(42% + ' + (below - 30) + 'px)'; }
+    const d = fit(earthCv), W = earthCv.width, H = earthCv.height, Hv = H - (below - 30) * d; ex.clearRect(0, 0, W, H);
+    const R = Math.min(W * .43, Hv * 1.05), gx = W / 2, gy = Hv * .3 + R, top = gy - R;
     const n = jst(), hr = n.getUTCHours() + n.getUTCMinutes() / 60 + n.getUTCSeconds() / 3600, cl = wx.cloud;
     const [rise, set] = sunTimes(n), sunUp = hr > rise && hr < set;
     const age = moonAge(Date.now()), transit = 12 + age * 24 / 29.530588853, mf = ((hr - (transit - 6.2)) % 24 + 24) % 24 / 12.4, moonUp = mf > 0 && mf < 1;
@@ -509,6 +518,8 @@
     b.innerHTML = '<span class="gear" style="clip-path:' + gearPath + ';-webkit-clip-path:' + gearPath + '"></span><span class="rim"></span><span class="face"><svg viewBox="0 0 24 24">' + ICONS[key] + '</svg><span>' + label + '</span></span>';
     stage.append(b); BTNS.push({ el: b, key, ang: i * TAU / 6 - Math.PI / 2, r: 41 });
   });
+  document.querySelectorAll('.dock button > i').forEach(i => { i.classList.add('mini'); const svg = i.innerHTML;
+    i.innerHTML = '<span class="gear" style="clip-path:' + gearPath + ';-webkit-clip-path:' + gearPath + '"></span><span class="rim"></span><span class="face">' + svg + '</span>'; });
   function placeButtons() {
     const max = Math.max(1, ...LABELS.map(([k]) => usage[k] || 0));
     BTNS.forEach(b => { const u = (usage[b.key] || 0) / max; b.r = 41 - 7 * Math.sqrt(u);
@@ -602,15 +613,15 @@
     const g = glCv.getContext('2d'), img = g.createImageData(w, h), hue = getComputedStyle(document.documentElement).getPropertyValue('--h');
     document.body.classList.add('glitching'); const t0 = performance.now(); let fired = false;
     (function step() {
-      const e = performance.now() - t0, k = e < 120 ? e / 120 : 1 - (e - 120) / 160;
+      const e = performance.now() - t0, k = e < 60 ? e / 60 : 1 - (e - 60) / 80;
       for (let i = 0; i < img.data.length; i += 4) { const v = Math.random() * 255 * (Math.random() < .5 ? 1 : .35); img.data[i] = v * .55; img.data[i + 1] = v * .85; img.data[i + 2] = v; img.data[i + 3] = 255 * Math.max(0, k) * .55; }
       g.putImageData(img, 0, 0);
       for (let i = 0; i < 6; i++) { const y = Math.random() * h, bh = 1 + Math.random() * 4;
         g.fillStyle = ['hsla(' + hue + ',100%,60%,.8)', 'rgba(255,40,80,.6)', 'rgba(255,255,255,.7)', 'rgba(0,0,0,.8)'][i % 4];
         g.fillRect(Math.random() * w * .4 - w * .2, y, w * (.5 + Math.random()), bh); }
       document.body.style.setProperty('--gx', ((Math.random() - .5) * 14 * Math.max(0, k)).toFixed(1) + 'px');
-      if (e > 110 && !fired) { fired = true; done(); }
-      if (e < 280) requestAnimationFrame(step);
+      if (e > 55 && !fired) { fired = true; done(); }
+      if (e < 140) requestAnimationFrame(step);
       else { g.clearRect(0, 0, w, h); document.body.classList.remove('glitching'); document.body.style.removeProperty('--gx'); glitching = false; }
     })();
   }
@@ -681,11 +692,11 @@
   }
   async function btc() {
     try {
-      const r = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=jpy&days=1', { cache: 'no-store' });
+      const r = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1', { cache: 'no-store' });
       const j = await r.json(); const p = j.prices; const last = p[p.length - 1]; const target = last[0] - 3600e3;
       let prev = p[0]; for (const q of p) { if (q[0] <= target) prev = q; else break; }
-      const pct = (last[1] / prev[1] - 1) * 100; signal.btc = pct; show('iBtc', 'mBtc', 'mBtcC', last[1], pct, '¥');
-      const sp = p.slice(-72).filter((_, i) => i % 3 === 0).map(q => q[1]); dq('qBTC', '¥' + (last[1] / 1e6).toFixed(2) + 'M', pct, sp);
+      const pct = (last[1] / prev[1] - 1) * 100; signal.btc = pct; show('iBtc', 'mBtc', 'mBtcC', last[1], pct, '$');
+      const sp = p.slice(-72).filter((_, i) => i % 3 === 0).map(q => q[1]); dq('qBTC', '$' + Math.round(last[1]).toLocaleString('en-US'), pct, sp);
     } catch (e) { $('iBtc').textContent = '取得できず'; }
   }
   async function nikkei() {
