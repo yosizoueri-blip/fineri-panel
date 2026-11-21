@@ -368,3 +368,37 @@ body.eyes-shut .backdrop .face:not(.shut) { opacity: 0; }
   .dp.dp-btn { background: linear-gradient(150deg, hsl(var(--h) 70% 40% / .26), hsl(var(--h) 70% 8% / .45)); }
   #brain { filter: saturate(.9); }
 }
+
+/* ---------- PC: data panels move into two side columns that hug the centre ---------- */
+.pc-side, .pc-only { display: none; }
+@media (min-width: 1100px) and (min-height: 601px) {
+  .pc-side { display: flex; flex-direction: column; gap: 16px; position: fixed; z-index: 2; top: 64px; bottom: 24px; pointer-events: none;
+    width: min(520px, calc(50vw - 320px)); overflow: hidden; }
+  .pc-l { right: calc(50% + 300px); align-items: stretch; }
+  .pc-r { left: calc(50% + 300px); align-items: stretch; }
+  .pc-only { display: block; }
+  .pc-side .dp { position: relative; inset: auto; max-width: none; width: auto; font-size: 15px; padding: 12px 16px 14px; flex: none; }
+  .pc-side .dp-l { transform: perspective(900px) rotateY(10deg); transform-origin: left center; }
+  .pc-side .dp-r { transform: perspective(900px) rotateY(-10deg); transform-origin: right center; }
+  .pc-side .dp-h { font-size: 12px; margin-bottom: 6px; }
+  .pc-side .dp .row { gap: 12px; line-height: 1.55; flex-wrap: nowrap; }
+  .pc-side .dp .row b { min-width: 104px; }
+  .pc-side .dp .sp { width: 90px; height: 18px; }
+  .pc-side .dp-race .n { overflow: visible; }
+  .pc-side .pc-grow { flex: 1 1 0; min-height: 0; overflow: hidden; }
+  .pc-side .bars { height: 26px; gap: 3px; margin-top: 8px; }
+  .pc-side .bars i { width: 6px; }
+  .pc-side .dp-l .bars { justify-content: flex-start; }
+  .xscan .row { display: flex; }
+  .xscan i, .xmeter { display: inline-block; height: 6px; background: var(--c); box-shadow: 0 0 6px var(--c); opacity: .75; transition: width .8s; }
+  .xmeter-bg { flex: 1; display: block; height: 6px; background: hsl(var(--h) 80% 40% / .15); } .xmeter-bg .xmeter { display: block; height: 100%; }
+  .xlog { font-size: 12px; line-height: 1.6; color: var(--mut); white-space: nowrap; overflow: hidden; }
+  .xlog div:last-child { color: var(--c2); }
+}
+@media (min-width: 1100px) and (min-height: 601px) and (max-height: 900px) {
+  .pc-side { gap: 10px; top: 56px; bottom: 14px; }
+  .pc-side .dp { font-size: 13px; padding: 8px 14px 10px; }
+  .pc-side .dp .row { line-height: 1.45; }
+  .pc-side .dp .row b { min-width: 88px; }
+  .pc-l .pc-only:not(.pc-grow) { display: none; }
+}

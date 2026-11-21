@@ -1,8 +1,9 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '3.24';
+  const VERSION = '3.25';
   const CHANGELOG = [
+    { v: '3.25', d: '2026-11-22', items: ['PCの大きい画面用: データパネルを両サイドに大きく並べた', 'PCだけの飾りパネル（NET・FOREST SCAN・POWER・LOG）を追加して、すき間を埋めた'] },
     { v: '3.24', d: '2026-11-21', items: ['PCの大きい画面で軽くなるように: 背景の描きこみを減らして、常に動くガラスのぼかしを止めた', 'PCで月の後ろに出ていた四角い光を消した'] },
     { v: '3.23', d: '2026-11-21', items: ['相場の定期報告が出ると真ん中の宝石が黒くなる。押すとオプティマスの報告メモが開いて、元の色に戻る', 'UPDATEのテストに「黒（報告）」ボタン'] },
     { v: '3.22', d: '2026-11-21', items: ['スマホを横向きにしたとき用の並べ方: 真ん中に操作盤、左にデータ、右に時計とボタン'] },
@@ -788,6 +789,32 @@
       row.children[1].style.minWidth = '30px'; row.title = r.course; box.append(row); });
   }).catch(() => {});
   /* meaningless-but-alive telemetry */
+
+  /* ---------- PC side columns: move the data panels out to the sides on big screens ---------- */
+  { const mq = matchMedia('(min-width: 1100px) and (min-height: 601px)'), L = document.querySelector('.pc-l'), Rr = document.querySelector('.pc-r');
+    const plan = [['.dp-sys', L, 0], ['.dp-mkt', L, 1], ['.dp-race', L, 2], ['.dp-tel', Rr, 0], ['.dp-hex', Rr, 1]];
+    const home = plan.map(([s]) => { const el = document.querySelector(s); return { el, parent: el.parentNode, next: el.nextSibling }; });
+    const place = () => {
+      if (mq.matches) plan.forEach(([, side, i], k) => { const el = home[k].el; side.insertBefore(el, side.children[i] || null); });
+      else home.forEach(h => h.parent.insertBefore(h.el, h.next));
+    };
+    place(); mq.addEventListener('change', place);
+    // decorative values for the PC-only panels
+    const rnd = (a, b) => a + Math.random() * (b - a);
+    const nb = $('xNetBars'), pb = $('xPowBars'); for (let i = 0; i < 24; i++) { nb.append(document.createElement('i')); pb.append(document.createElement('i')); }
+    const sectors = ['NORTH GROVE', 'ELDER TREE', 'MOON LAKE', 'SPIRIT GATE', 'MIST VALLEY', 'CRYSTAL CAVE', 'OLD SHRINE', 'WIND RIDGE'];
+    $('xScan').className = 'xscan'; $('xScan').innerHTML = sectors.map(s => '<div class="row"><b>' + s + '</b><span class="xmeter-bg"><i class="xmeter" style="width:0"></i></span><span class="xpct">0%</span></div>').join('');
+    const words = ['SYNC', 'PING', 'SCAN', 'LINK', 'WARD', 'TRACE', 'BLOOM', 'ECHO'], log = $('xLog');
+    const tick = () => { if (!mq.matches) return;
+      $('xLat').textContent = rnd(8, 32).toFixed(1) + ' ms'; $('xPkt').textContent = Math.round(rnd(1200, 4800)) + ' /s'; $('xNode').textContent = Math.round(rnd(36, 42)) + ' / 42';
+      $('xPow').textContent = rnd(92, 99.9).toFixed(1) + ' %'; $('xTmp').textContent = rnd(31, 38).toFixed(1) + ' C'; $('xShd').textContent = rnd(80, 100).toFixed(0) + ' %';
+      [nb, pb].forEach(b => b.querySelectorAll('i').forEach(i => i.style.height = rnd(3, 26) + 'px'));
+      $('xScan').querySelectorAll('.row').forEach(r => { const v = Math.random() < .3 ? rnd(20, 100) : null; if (v === null) return; r.querySelector('.xmeter').style.width = v + '%'; r.querySelector('.xpct').textContent = Math.round(v) + '%'; });
+      const n = jst(), ts = String(n.getUTCHours()).padStart(2, '0') + ':' + String(n.getUTCMinutes()).padStart(2, '0') + ':' + String(n.getUTCSeconds()).padStart(2, '0');
+      const d = document.createElement('div'); d.textContent = ts + '  ' + words[Math.random() * words.length | 0] + ' ' + Math.floor(rnd(0, 65535)).toString(16).toUpperCase().padStart(4, '0') + '  OK';
+      log.append(d); while (log.children.length > 40) log.firstChild.remove();
+      while (log.scrollHeight > log.clientHeight + 2 && log.children.length > 1) log.firstChild.remove(); };
+    tick(); setInterval(tick, 1200); }
   const bars = $('tBars'); for (let i = 0; i < 14; i++) bars.append(document.createElement('i'));
   const hexBox = $('hexList'), boot = Date.now(), hex = () => Math.floor(Math.random() * 0xffff).toString(16).toUpperCase().padStart(4, '0');
   for (let i = 0; i < 4; i++) { const r = document.createElement('div'); r.className = 'row'; hexBox.append(r); }

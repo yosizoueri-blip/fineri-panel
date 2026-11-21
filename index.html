@@ -14,7 +14,7 @@
 <link rel="icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="app.css?v=3.24">
+<link rel="stylesheet" href="app.css?v=3.25">
 </head>
 <body>
 <canvas id="brain" aria-hidden="true"></canvas>
@@ -24,6 +24,19 @@
 <canvas id="field" aria-hidden="true"></canvas>
 <div class="vignette" aria-hidden="true"></div>
 
+<!-- PC only: two side columns; the data panels move here on big screens, plus extra decorative panels -->
+<aside class="pc-side pc-l">
+  <div class="dp dp-l dp-x pc-only" aria-hidden="true"><div class="dp-h">NET // UPLINK</div>
+    <div class="row"><b>LATENCY</b><span id="xLat">-</span></div><div class="row"><b>PACKETS</b><span id="xPkt">-</span></div>
+    <div class="row"><b>NODES</b><span id="xNode">-</span></div><div class="bars wide" id="xNetBars"></div></div>
+  <div class="dp dp-l dp-x pc-only pc-grow" aria-hidden="true"><div class="dp-h">FOREST // SCAN</div><div id="xScan"></div></div>
+</aside>
+<aside class="pc-side pc-r">
+  <div class="dp dp-r dp-x pc-only" aria-hidden="true"><div class="dp-h">POWER // CORE</div>
+    <div class="row"><b>OUTPUT</b><span id="xPow">-</span></div><div class="row"><b>TEMP</b><span id="xTmp">-</span></div>
+    <div class="row"><b>SHIELD</b><span id="xShd">-</span></div><div class="bars wide" id="xPowBars"></div></div>
+  <div class="dp dp-r dp-x pc-only pc-grow" aria-hidden="true"><div class="dp-h">LOG // STREAM</div><div id="xLog" class="xlog"></div></div>
+</aside>
 <div class="app">
   <header class="head">
     <div class="logo">FINERI<small>ELF FOREST</small></div>
@@ -230,6 +243,6 @@
   </div>
 </section>
 
-<script src="app.js?v=3.24"></script>
+<script src="app.js?v=3.25"></script>
 </body>
 </html>
