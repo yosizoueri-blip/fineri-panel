@@ -1,8 +1,12 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '2.0';
+  const VERSION = '2.1';
   const CHANGELOG = [
+    { v: '2.1', d: '2026-11-21', items: [
+      'オプティマスのつながりを中央コアのまわりに集めて、目立つように',
+      'よくつながっているメモほど大きく光る。線の上を光が走り、数秒ごとに中心から脈が広がる',
+      'つながりを今のオプティマスに更新（37ノート／100リンク）'] },
     { v: '2.0', d: '2026-11-21', items: [
       '映画風の ARC CORE に作り直し',
       '中央に光る水晶。ビットコインか日経平均が1時間で±5%動くと、上がる=緑、下がる=赤（逆に動いたら半分ずつ）',
@@ -61,35 +65,84 @@
     return d;
   }
 
-  /* ---------- Optimus synapse field (background) ---------- */
+  /* ---------- Optimus synapse cluster (around the core) ---------- */
+  // Real vault structure (graph.json: counts + links only). Laid out like Obsidian's graph,
+  // centred on the core, so the connections read as a living brain behind the panel.
   let GRAPH = { n: 0, hub: 0, g: [], e: [] };
-  const field = $('field'), fx = field.getContext('2d');
-  let nodes = [], pulses = [];
-  function buildField() {
-    const W = field.width, H = field.height; let s = 11;
-    const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
-    nodes = [];
-    for (let i = 0; i < GRAPH.n; i++) {
-      const hub = i === GRAPH.hub;
-      nodes.push({ x: hub ? W * .5 : W * (.08 + rnd() * .84), y: hub ? H * .5 : H * (.06 + rnd() * .88), ph: rnd() * TAU, sp: .2 + rnd() * .5, r: hub ? 4 : 2 + rnd() * 1.5 });
+  const field = $('field'), fx = field.getContext('2d'), stageEl = $('stage');
+  let lay = [], deg = [], maxDeg = 1, pulses = [], waves = [], dust = [], nextWave = 0;
+  function layout() {
+    const N = GRAPH.n; let s = 7; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+    deg = new Array(N).fill(0); GRAPH.e.forEach(([a, b]) => { deg[a]++; deg[b]++; }); maxDeg = Math.max(1, ...deg);
+    const p = []; for (let i = 0; i < N; i++) { const a = rnd() * TAU, r = .2 + rnd() * .8; p.push([Math.cos(a) * r, Math.sin(a) * r]); }
+    p[GRAPH.hub] = [0, 0];
+    for (let it = 0; it < 420; it++) {
+      const f = p.map(() => [0, 0]), k = .16;
+      for (let i = 0; i < N; i++) for (let j = i + 1; j < N; j++) {
+        const dx = p[i][0] - p[j][0], dy = p[i][1] - p[j][1], d2 = dx * dx + dy * dy + 1e-4, F = k * k / d2 * .9;
+        f[i][0] += dx * F; f[i][1] += dy * F; f[j][0] -= dx * F; f[j][1] -= dy * F;
+      }
+      GRAPH.e.forEach(([a, b]) => { const dx = p[a][0] - p[b][0], dy = p[a][1] - p[b][1], d = Math.hypot(dx, dy) + 1e-4, F = d / k * .06;
+        f[a][0] -= dx * F; f[a][1] -= dy * F; f[b][0] += dx * F; f[b][1] += dy * F; });
+      const cool = .06 * (1 - it / 420) + .004;
+      for (let i = 0; i < N; i++) { if (i === GRAPH.hub) continue;
+        f[i][0] -= p[i][0] * .05; f[i][1] -= p[i][1] * .05; // gravity
+        const m = Math.hypot(f[i][0], f[i][1]) || 1, st = Math.min(m, cool);
+        p[i][0] += f[i][0] / m * st; p[i][1] += f[i][1] / m * st; }
     }
-    // ghost nodes so the field feels alive but stays truthful: they are faint and unconnected
-    for (let i = 0; i < 26; i++) nodes.push({ x: W * rnd(), y: H * rnd(), ph: rnd() * TAU, sp: .1 + rnd() * .3, r: 1, ghost: true });
+    // spread into a ring around the core: keep each note's direction order and its near/far order from the layout,
+    // but even them out so the whole ring is used and nothing hides behind the core
+    const ids = [...Array(N).keys()].filter(i => i !== GRAPH.hub);
+    const ang = ids.map(i => Math.atan2(p[i][1], p[i][0])), dis = ids.map(i => Math.hypot(p[i][0], p[i][1]));
+    const byA = ids.map((_, k) => k).sort((x, y) => ang[x] - ang[y]), byD = ids.map((_, k) => k).sort((x, y) => dis[x] - dis[y]);
+    const aR = [], dR = []; byA.forEach((k, r) => aR[k] = r); byD.forEach((k, r) => dR[k] = r);
+    lay = new Array(N);
+    ids.forEach((i, k) => { const A = (aR[k] + .5) / ids.length * TAU + (rnd() - .5) * .12, R = .31 + dR[k] / ids.length * .27 + (rnd() - .5) * .03;
+      lay[i] = { x: Math.cos(A) * R, y: Math.sin(A) * R, ph: rnd() * TAU, sp: .3 + rnd() * .5 }; });
+    lay[GRAPH.hub] = { x: 0, y: 0, ph: 0, sp: 0 };
+    dust = []; for (let i = 0; i < 40; i++) dust.push({ x: rnd(), y: rnd(), ph: rnd() * TAU });
   }
   function drawField(t) {
-    const d = fit(field); if (!nodes.length || field._w !== field.width) { field._w = field.width; buildField(); }
-    const W = field.width, H = field.height; fx.clearRect(0, 0, W, H);
-    const P = nodes.map(n => [n.x + Math.sin(t * .00012 * n.sp + n.ph) * 26 * d, n.y + Math.cos(t * .0001 * n.sp + n.ph) * 22 * d]);
-    fx.lineWidth = 1 * d;
-    GRAPH.e.forEach(([a, b]) => { fx.strokeStyle = col(.12); fx.beginPath(); fx.moveTo(P[a][0], P[a][1]); fx.lineTo(P[b][0], P[b][1]); fx.stroke(); });
-    if (!reduce && Math.random() < .05 && GRAPH.e.length) { const e = GRAPH.e[(Math.random() * GRAPH.e.length) | 0]; pulses.push({ a: e[Math.random() < .5 ? 0 : 1], e, k: 0 }); }
+    const d = fit(field), W = field.width, H = field.height; fx.clearRect(0, 0, W, H);
+    // faint far-away dust over the whole screen
+    dust.forEach(p => { fx.fillStyle = col(.08 + .06 * Math.sin(t * .001 + p.ph)); fx.beginPath(); fx.arc(p.x * W, p.y * H, 1 * d, 0, TAU); fx.fill(); });
+    if (!lay.length) return;
+    const sr = stageEl.getBoundingClientRect(), cx0 = (sr.left + sr.width / 2) * d, cy0 = (sr.top + sr.height / 2) * d;
+    const RAD = sr.width * d, rot = reduce ? 0 : t * .000025, cs = Math.cos(rot), sn = Math.sin(rot);
+    const P = lay.map(n => { const wob = .008, x = n.x + Math.sin(t * .0004 * n.sp + n.ph) * wob, y = n.y + Math.cos(t * .00035 * n.sp + n.ph) * wob;
+      return [cx0 + (x * cs - y * sn) * RAD, cy0 + (x * sn + y * cs) * RAD]; });
+    // heartbeat: a wave leaves the hub every few seconds and lights the links it reaches
+    if (!reduce && t > nextWave) { waves.push(t); nextWave = t + 4200; }
+    waves = waves.filter(w => t - w < 2200);
+    const hubP = P[GRAPH.hub], waveLit = (x, y) => { let v = 0; waves.forEach(w => { const r = (.24 + (t - w) / 2200 * .42) * RAD, dd = Math.abs(Math.hypot(x - hubP[0], y - hubP[1]) - r); v = Math.max(v, Math.max(0, 1 - dd / (RAD * .06)) * (1 - (t - w) / 2200)); }); return v; };
+    // keep the crystal chamber clear: draw only outside it
+    fx.save(); fx.beginPath(); fx.rect(0, 0, W, H); fx.arc(cx0, cy0, sr.width * .26 * d, 0, TAU, true); fx.clip();
+    // links: glow underlay + bright core line
+    fx.lineCap = 'round';
+    GRAPH.e.forEach(([a, b]) => {
+      const A = P[a], B = P[b], w = (deg[a] + deg[b]) / (2 * maxDeg), lit = waveLit((A[0] + B[0]) / 2, (A[1] + B[1]) / 2);
+      fx.strokeStyle = col(.10 + .18 * lit); fx.lineWidth = (4 + 3 * w) * d; fx.beginPath(); fx.moveTo(A[0], A[1]); fx.lineTo(B[0], B[1]); fx.stroke();
+      fx.strokeStyle = col(.34 + .3 * w + .4 * lit, 72); fx.lineWidth = (1 + .9 * w) * d; fx.beginPath(); fx.moveTo(A[0], A[1]); fx.lineTo(B[0], B[1]); fx.stroke();
+    });
+    // light running along the links (comet with a tail)
+    if (!reduce && GRAPH.e.length) for (let k = 0; k < 2; k++) if (Math.random() < .2 && pulses.length < 26) { const e = GRAPH.e[(Math.random() * GRAPH.e.length) | 0]; pulses.push({ a: e[Math.random() < .5 ? 0 : 1], e, k: 0, v: .008 + Math.random() * .008 }); }
+    fx.globalCompositeOperation = 'lighter';
     for (let i = pulses.length - 1; i >= 0; i--) {
-      const p = pulses[i]; p.k += .008; if (p.k >= 1) { pulses.splice(i, 1); continue; }
-      const A = P[p.a], B = P[p.e[0] === p.a ? p.e[1] : p.e[0]];
-      fx.fillStyle = col(.9, 85); fx.shadowColor = col(1); fx.shadowBlur = 10 * d;
-      fx.beginPath(); fx.arc(A[0] + (B[0] - A[0]) * p.k, A[1] + (B[1] - A[1]) * p.k, 1.8 * d, 0, TAU); fx.fill(); fx.shadowBlur = 0;
+      const p = pulses[i]; p.k += p.v; if (p.k >= 1) { pulses.splice(i, 1); continue; }
+      const A = P[p.a], B = P[p.e[0] === p.a ? p.e[1] : p.e[0]], x = A[0] + (B[0] - A[0]) * p.k, y = A[1] + (B[1] - A[1]) * p.k;
+      const k0 = Math.max(0, p.k - .22), tx = A[0] + (B[0] - A[0]) * k0, ty = A[1] + (B[1] - A[1]) * k0;
+      const g = fx.createLinearGradient(tx, ty, x, y); g.addColorStop(0, col(0)); g.addColorStop(1, col(.95, 82));
+      fx.strokeStyle = g; fx.lineWidth = 2.4 * d; fx.beginPath(); fx.moveTo(tx, ty); fx.lineTo(x, y); fx.stroke();
+      fx.fillStyle = col(1, 92); fx.shadowColor = col(1); fx.shadowBlur = 14 * d; fx.beginPath(); fx.arc(x, y, 2.4 * d, 0, TAU); fx.fill(); fx.shadowBlur = 0;
     }
-    nodes.forEach((n, i) => { fx.fillStyle = n.ghost ? col(.12) : col(.35 + .2 * Math.sin(t * .002 + n.ph)); fx.beginPath(); fx.arc(P[i][0], P[i][1], n.r * d, 0, TAU); fx.fill(); });
+    // nodes: size and glow by how many links they have
+    lay.forEach((n, i) => {
+      const w = deg[i] / maxDeg, x = P[i][0], y = P[i][1], lit = waveLit(x, y), r = (1.8 + 5 * Math.sqrt(w)) * d, br = .55 + .25 * Math.sin(t * .002 + n.ph) + .3 * lit;
+      const g = fx.createRadialGradient(x, y, 0, x, y, r * 4.5); g.addColorStop(0, col(.35 * br + .2 * w)); g.addColorStop(1, col(0));
+      fx.fillStyle = g; fx.beginPath(); fx.arc(x, y, r * 4.5, 0, TAU); fx.fill();
+      fx.fillStyle = col(Math.min(1, .6 + .4 * br), 80); fx.beginPath(); fx.arc(x, y, r, 0, TAU); fx.fill();
+    });
+    fx.globalCompositeOperation = 'source-over'; fx.restore();
   }
 
   /* ---------- sky: globe, sun, moon ---------- */
@@ -349,11 +402,10 @@
   btc(); nikkei(); setInterval(btc, 5 * 60e3); setInterval(nikkei, 5 * 60e3);
 
   /* ---------- boot ---------- */
-  fetch('graph.json', { cache: 'no-store' }).then(r => r.json()).then(g => { GRAPH = g; nodes = []; $('stMem').textContent = g.n + ' NOTES / ' + g.e.length + ' LINKS'; }).catch(() => { $('stMem').textContent = '-'; });
+  fetch('graph.json', { cache: 'no-store' }).then(r => r.json()).then(g => { GRAPH = g; layout(); $('stMem').textContent = g.n + ' NOTES / ' + g.e.length + ' LINKS'; }).catch(() => { $('stMem').textContent = '-'; });
   tick(); setInterval(tick, 1000);
   function frame(t) { drawField(t); drawSky(t); drawCore(t); if (!reduce) requestAnimationFrame(frame); }
   requestAnimationFrame(frame);
   if (reduce) setInterval(() => frame(performance.now()), 30000);
-  addEventListener('resize', () => { nodes = []; });
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 })();
