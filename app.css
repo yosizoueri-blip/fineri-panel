@@ -426,3 +426,46 @@ body.eyes-shut .backdrop .face:not(.shut) { opacity: 0; }
   .pc-side .dp.dp-btn:hover { box-shadow: inset 0 2px 10px rgba(0,0,0,.9), inset 0 0 0 1px hsl(var(--h) 90% 65% / .7), 0 0 12px hsl(var(--h) 90% 60% / .3); }
   .pc-side .dp::after { display: none; }
 }
+/* PC console v2: HUD-style frames, tabs and live visuals instead of plain boxes */
+@media (min-width: 1100px) and (min-height: 601px) {
+  .pc-side { gap: 12px; padding: 26px 18px 18px;
+    background:
+      repeating-linear-gradient(0deg, hsl(var(--h) 90% 60% / .035) 0 1px, transparent 1px 4px),
+      linear-gradient(160deg, hsl(var(--h) 60% 20% / .45), hsl(var(--h) 60% 5% / .75) 45%, hsl(var(--h) 60% 9% / .6)); }
+  .pc-side::before { content: "FINERI // CONSOLE-L"; position: absolute; top: 7px; left: 26px; font: 600 10px var(--font-tech); letter-spacing: .3em; color: var(--c); opacity: .75; }
+  .pc-r::before { content: "FINERI // CONSOLE-R"; left: auto; right: 26px; }
+  .pc-side::after { content: ""; position: absolute; top: 12px; left: 220px; right: 26px; height: 1px; background: linear-gradient(90deg, var(--c), transparent); opacity: .5; }
+  .pc-r::after { left: 26px; right: 220px; background: linear-gradient(270deg, var(--c), transparent); }
+  .pc-side .dp, .pc-side .dp-l, .pc-side .dp-r { text-align: left; padding: 30px 14px 12px; border-radius: 0; box-shadow: none;
+    --k: hsl(var(--h) 90% 65% / .75);
+    background:
+      linear-gradient(var(--k), var(--k)) top left / 14px 1px, linear-gradient(var(--k), var(--k)) top left / 1px 14px,
+      linear-gradient(var(--k), var(--k)) top right / 14px 1px, linear-gradient(var(--k), var(--k)) top right / 1px 14px,
+      linear-gradient(var(--k), var(--k)) bottom left / 14px 1px, linear-gradient(var(--k), var(--k)) bottom left / 1px 14px,
+      linear-gradient(var(--k), var(--k)) bottom right / 14px 1px, linear-gradient(var(--k), var(--k)) bottom right / 1px 14px,
+      linear-gradient(180deg, hsl(var(--h) 80% 30% / .16), rgba(0,8,18,.55));
+    background-repeat: no-repeat; outline: 1px solid hsl(var(--h) 90% 60% / .12); outline-offset: -1px; }
+  .pc-side .dp.dp-btn:hover { outline-color: hsl(var(--h) 90% 65% / .6); box-shadow: 0 0 14px hsl(var(--h) 90% 60% / .25); }
+  .pc-side .dp::before { left: 0; right: 0; top: 0; width: auto; height: 22px; background: linear-gradient(90deg, hsl(var(--h) 90% 50% / .22), transparent 70%); box-shadow: none; border-bottom: 1px solid hsl(var(--h) 90% 60% / .25); }
+  .pc-side .dp-h { position: absolute; top: 4px; left: 14px; margin: 0; font-size: 11px; color: var(--c2, var(--c)); }
+  .pc-side .dp .row, .pc-side .dp-r .row { justify-content: space-between; }
+  .pc-side .dp .row b { min-width: 0; }
+  .pc-side .dp-mkt .row { display: grid; grid-template-columns: 90px 1fr auto 1.2fr; gap: 10px; }
+  .pc-side .dp-mkt .sp { width: 100%; height: 18px; }
+  .pc-side .dp-race .row { display: grid; grid-template-columns: 30px 56px 1fr; }
+  .pc-side .dp-tel .bars, .pc-side #xPowBars { display: none; }
+  .pc-viz { display: block; width: 100%; }
+  .v-wave { height: 64px; margin-top: 8px; }
+  .v-wave2 { height: 40px; margin-top: 6px; }
+  .v-gauge { height: 92px; margin-top: 6px; }
+  .v-orbit { position: absolute; right: 14px; top: 34px; width: 96px !important; height: 96px; }
+  .pc-side .dp-sys .row { max-width: calc(100% - 110px); }
+  .pc-side .dp-hex { display: grid; grid-template-columns: 112px 1fr; column-gap: 18px; align-items: center; }
+  .v-radar { width: 112px; height: 112px; }
+  .pc-side .dp-hex #hexList .row { justify-content: space-between; letter-spacing: .14em; }
+  .pc-side .xlog { font-size: 12.5px; }
+}
+@media (min-width: 1100px) and (min-height: 601px) {
+  .pc-side .xscan .row { display: grid; grid-template-columns: 130px 1fr 44px; gap: 12px; }
+  .pc-side .xscan .xpct { text-align: right; }
+}

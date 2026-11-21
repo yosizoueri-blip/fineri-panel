@@ -1,8 +1,9 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '3.28';
+  const VERSION = '3.29';
   const CHANGELOG = [
+    { v: '3.29', d: '2026-11-22', items: ['PC: 両サイドの操作盤をデザインし直し。見出しタブ・四隅の枠に変更', 'すき間を埋める動く表示を追加: 波形・レーダー・メーター・軌道', '左右そろえて表示、ログは最初から流れている'] },
     { v: '3.28', d: '2026-11-22', items: ['PC: 両サイドを大きな1枚の操作盤にして、データパネルを埋め込んだ画面みたいにした'] },
     { v: '3.27', d: '2026-11-22', items: ['PC: MUMEIボタンを下げて、アングロの顔がもっと見えるように'] },
     { v: '3.26', d: '2026-11-22', items: ['PC: 宝石と地球を下げて、アングロの顔を少し上げた。目がボタンにかからないように'] },
@@ -817,7 +818,42 @@
       const d = document.createElement('div'); d.textContent = ts + '  ' + words[Math.random() * words.length | 0] + ' ' + Math.floor(rnd(0, 65535)).toString(16).toUpperCase().padStart(4, '0') + '  OK';
       log.append(d); while (log.children.length > 40) log.firstChild.remove();
       while (log.scrollHeight > log.clientHeight + 2 && log.children.length > 1) log.firstChild.remove(); };
-    tick(); setInterval(tick, 1200); }
+    for (let i = 0; i < 30; i++) tick(); setInterval(tick, 1200);
+    // PC-only live visuals inside the console panels: oscilloscope, radar, gauges
+    const mk = (sel, kind, before) => { const host = document.querySelector(sel); if (!host) return null; const c = document.createElement('canvas'); c.className = 'pc-only pc-viz v-' + kind;
+      const ref = before ? host.querySelector(before) : null; host.insertBefore(c, ref); return { c, g: c.getContext('2d'), kind }; };
+    const V = [mk('.dp-tel', 'wave'), mk('.dp-hex', 'radar', '#hexList'), mk('.dp-sys', 'orbit')].filter(Boolean);
+    { const pw = $('xPowBars'); if (pw) { const c = document.createElement('canvas'); c.className = 'pc-only pc-viz v-gauge'; pw.parentNode.insertBefore(c, pw); V.push({ c, g: c.getContext('2d'), kind: 'gauge' }); } }
+    { const nb2 = $('xNetBars'); if (nb2) { const c = document.createElement('canvas'); c.className = 'pc-only pc-viz v-wave2'; nb2.parentNode.insertBefore(c, nb2); V.push({ c, g: c.getContext('2d'), kind: 'wave' }); } }
+    const blips = Array.from({ length: 7 }, () => ({ a: Math.random() * TAU, r: .25 + Math.random() * .7, life: 0 }));
+    const gv = [rnd(60, 95), rnd(40, 90), rnd(70, 99)];
+    let lastViz = 0;
+    function viz(t) { requestAnimationFrame(viz); if (!mq.matches || t - lastViz < 50) return; lastViz = t;
+      const C = getComputedStyle(document.body).getPropertyValue('--c').trim() || '#4fd8ff';
+      V.forEach(v => { const c = v.c, w = c.clientWidth, h = c.clientHeight; if (!w || !h) return; const d = Math.min(2, devicePixelRatio || 1);
+        if (c.width !== Math.round(w * d)) { c.width = Math.round(w * d); c.height = Math.round(h * d); }
+        const g = v.g; g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, w, h); g.strokeStyle = C; g.fillStyle = C; g.lineWidth = 1;
+        if (v.kind === 'wave') { g.globalAlpha = .18; for (let x = 0; x <= w; x += w / 12) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); } for (let y = 0; y <= h; y += h / 4) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
+          [[1, .9, 2.2], [.55, .5, 3.7], [.35, .3, 7.1]].forEach(([a, amp, f], k) => { g.globalAlpha = a; g.lineWidth = k ? 1 : 1.6; g.beginPath();
+            for (let x = 0; x <= w; x += 2) { const p = x / w * TAU * f + t * .002 * (k + 1); const y = h / 2 + Math.sin(p) * Math.sin(p * .31 + t * .0007) * h * .42 * amp + (k === 2 ? (Math.random() - .5) * 3 : 0); x ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke(); });
+        } else if (v.kind === 'radar') { const R = Math.min(w, h) / 2 - 2, cx0 = w / 2, cy0 = h / 2, sw = (t * .0012) % TAU; g.globalAlpha = .35;
+          [1, .66, .33].forEach(k => { g.beginPath(); g.arc(cx0, cy0, R * k, 0, TAU); g.stroke(); }); g.beginPath(); g.moveTo(cx0 - R, cy0); g.lineTo(cx0 + R, cy0); g.moveTo(cx0, cy0 - R); g.lineTo(cx0, cy0 + R); g.stroke();
+          for (let i = 0; i < 24; i++) { g.globalAlpha = .5 * (1 - i / 24); g.beginPath(); g.moveTo(cx0, cy0); g.arc(cx0, cy0, R, sw - (i + 1) * .045, sw - i * .045); g.closePath(); g.fill(); }
+          blips.forEach(b => { const da = ((sw - b.a) % TAU + TAU) % TAU; if (da < .08) b.life = 1; b.life *= .985; if (Math.random() < .002) { b.a = Math.random() * TAU; b.r = .25 + Math.random() * .7; }
+            g.globalAlpha = b.life; g.beginPath(); g.arc(cx0 + Math.cos(b.a) * R * b.r, cy0 + Math.sin(b.a) * R * b.r, 2.5, 0, TAU); g.fill(); });
+        } else if (v.kind === 'gauge') { const n = 3, cw = w / n, R = Math.min(cw, h) / 2 - 6, labels = ['CORE', 'FLOW', 'GRID'];
+          gv.forEach((val, i) => { gv[i] = Math.max(20, Math.min(100, val + (Math.random() - .5) * 2)); const cx0 = cw * i + cw / 2, cy0 = h / 2, a0 = Math.PI * .75, a1 = a0 + Math.PI * 1.5 * gv[i] / 100;
+            g.globalAlpha = .2; g.lineWidth = 5; g.beginPath(); g.arc(cx0, cy0, R, a0, Math.PI * 2.25); g.stroke(); g.globalAlpha = .95; g.beginPath(); g.arc(cx0, cy0, R, a0, a1); g.stroke();
+            g.lineWidth = 1; g.globalAlpha = .45; g.beginPath(); g.arc(cx0, cy0, R - 8, 0, TAU); g.stroke();
+            g.globalAlpha = 1; g.font = '600 ' + Math.round(R * .45) + 'px ' + getComputedStyle(document.body).getPropertyValue('--font-tech'); g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(Math.round(gv[i]), cx0, cy0 - 1);
+            g.globalAlpha = .6; g.font = '600 ' + Math.round(R * .22) + 'px sans-serif'; g.fillText(labels[i], cx0, cy0 + R * .55); });
+        } else if (v.kind === 'orbit') { const cx0 = w / 2, cy0 = h / 2, R = Math.min(w, h) / 2 - 3; g.globalAlpha = .3; g.beginPath(); g.arc(cx0, cy0, R, 0, TAU); g.stroke(); g.beginPath(); g.ellipse(cx0, cy0, R, R * .35, -.4, 0, TAU); g.stroke(); g.beginPath(); g.ellipse(cx0, cy0, R * .35, R, .3, 0, TAU); g.stroke();
+          g.globalAlpha = .9; g.beginPath(); g.arc(cx0, cy0, R * .22, 0, TAU); g.fill(); const p = t * .0009, q = t * .0013;
+          g.beginPath(); g.arc(cx0 + Math.cos(p) * R * Math.cos(-.4) - Math.sin(p) * R * .35 * Math.sin(-.4), cy0 + Math.cos(p) * R * Math.sin(-.4) + Math.sin(p) * R * .35 * Math.cos(-.4), 3, 0, TAU); g.fill();
+          g.beginPath(); g.arc(cx0 + Math.cos(q) * R * .35 * Math.cos(.3) - Math.sin(q) * R * Math.sin(.3), cy0 + Math.cos(q) * R * .35 * Math.sin(.3) + Math.sin(q) * R * Math.cos(.3), 2.5, 0, TAU); g.fill(); }
+        g.globalAlpha = 1; });
+    }
+    if (!reduce) requestAnimationFrame(viz); else { lastViz = -1e9; viz(0); } }
   const bars = $('tBars'); for (let i = 0; i < 14; i++) bars.append(document.createElement('i'));
   const hexBox = $('hexList'), boot = Date.now(), hex = () => Math.floor(Math.random() * 0xffff).toString(16).toUpperCase().padStart(4, '0');
   for (let i = 0; i < 4; i++) { const r = document.createElement('div'); r.className = 'row'; hexBox.append(r); }
