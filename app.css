@@ -84,7 +84,9 @@ button { font: inherit; }
 .gbtn { position: absolute; z-index: 3; width: 21%; aspect-ratio: 1; transform: translate(-50%, -50%); border: 0; padding: 0; background: none; cursor: pointer; color: var(--fg);
   transition: left .9s cubic-bezier(.2,.8,.2,1), top .9s cubic-bezier(.2,.8,.2,1);
   filter: drop-shadow(0 6px 8px rgba(0,0,0,.7)) drop-shadow(0 0 8px hsl(var(--h) 100% 60% / .35)); }
-.gbtn .gear { position: absolute; inset: 0; background: conic-gradient(from 210deg, hsl(var(--h) 20% 55%), hsl(var(--h) 15% 18%), hsl(var(--h) 25% 60%), hsl(var(--h) 15% 14%), hsl(var(--h) 20% 55%));
+.gbtn .gear { position: absolute; inset: 0; background:
+    radial-gradient(circle closest-side, rgba(0,0,0,.45) 84%, transparent 87.5%, rgba(255,255,255,.45) 89.5%, rgba(255,255,255,.08) 95%, rgba(0,0,0,.55) 100%),
+    conic-gradient(from 210deg, hsl(var(--h) 20% 55%), hsl(var(--h) 15% 18%), hsl(var(--h) 25% 60%), hsl(var(--h) 15% 14%), hsl(var(--h) 20% 55%));
   animation: turn 40s linear infinite; }
 .gbtn:nth-child(even) .gear { animation-direction: reverse; }
 @keyframes turn { to { transform: rotate(360deg) } }
@@ -248,3 +250,6 @@ textarea, input[type=text] { font: inherit; color: var(--fg); background: rgba(0
 .dp-race { transform: perspective(420px) rotateY(24deg) rotateX(14deg) skewY(-2deg); }
 .dp-hex { transform: perspective(420px) rotateY(-24deg) rotateX(14deg) skewY(2deg); }
 
+
+/* zoom transition: dim everything else while a button flies in */
+body.zooming .app > :not(.mid), body.zooming .dp, body.zooming #core, body.zooming #links { transition: opacity .4s; opacity: .15; }

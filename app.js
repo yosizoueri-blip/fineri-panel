@@ -1,8 +1,9 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '3.3';
+  const VERSION = '3.4';
   const CHANGELOG = [
+    { v: '3.4', d: '2026-11-21', items: ['歯車の歯を中くらいの高さの台形に。縁にふちどりと影を入れて立体的に', 'ボタンを押すと、ボタンが真ん中で大きくなってからページが開くように'] },
     { v: '3.3', d: '2026-11-21', items: ['ボタンは中だけガラスに。外の歯車と縁は金属に戻した', '歯車の歯を高く、角を立てた'] },
     { v: '3.2', d: '2026-11-21', items: ['中央のオプティマスの点を小さく、さらに暗く', 'ボタンをほぼ透明なガラスに'] },
     { v: '3.1', d: '2026-11-21', items: ['中央のオプティマスと地球・太陽・月をさらに薄く'] },
@@ -449,7 +450,7 @@
   const LABELS = [['talk', 'MUMEI'], ['market', 'MARKET'], ['keiba', 'RACING'], ['tasks', 'TASKS'], ['memory', 'MEMORY'], ['forest', 'FOREST']];
   const BTNS = [];
   let usage = load('fineri.usage', {});
-  const gearPath = (() => { const n = 16, pts = []; for (let i = 0; i < n * 4; i++) { const k = i % 4, a = (Math.floor(i / 4) + [0, .04, .46, .5][k]) / n * TAU, r = (k === 1 || k === 2) ? 50 : 41; pts.push((50 + r * Math.cos(a)).toFixed(2) + '% ' + (50 + r * Math.sin(a)).toFixed(2) + '%'); } return 'polygon(' + pts.join(',') + ')'; })();
+  const gearPath = (() => { const n = 16, pts = []; for (let i = 0; i < n * 4; i++) { const k = i % 4, a = (Math.floor(i / 4) + [0, .12, .4, .52][k]) / n * TAU, r = (k === 1 || k === 2) ? 50 : 44; pts.push((50 + r * Math.cos(a)).toFixed(2) + '% ' + (50 + r * Math.sin(a)).toFixed(2) + '%'); } return 'polygon(' + pts.join(',') + ')'; })();
   const stage = $('stage');
   LABELS.forEach(([key, label], i) => {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'gbtn'; b.dataset.open = key; b.setAttribute('aria-label', label);
@@ -476,9 +477,24 @@
   }
   function closeMod() { sheet.classList.remove('open'); veil.classList.remove('open'); if (lastFocus) lastFocus.focus({ preventScroll: true }); }
   document.addEventListener('click', e => {
-    const o = e.target.closest('[data-open]'); if (o) { openMod(o.dataset.open, o); return; }
+    const o = e.target.closest('[data-open]');
+    if (o && o.classList.contains('gbtn') && !reduce) { zoomOpen(o); return; }
+    if (o) { openMod(o.dataset.open, o); return; }
     const h = e.target.closest('[data-href]'); if (h) { location.href = h.dataset.href; }
   });
+  // press a round button: it flies to the centre and grows until it fills the screen, then the page opens
+  let zooming = false;
+  function zoomOpen(b) {
+    if (zooming) return; zooming = true;
+    const r = b.getBoundingClientRect(), dx = innerWidth / 2 - (r.left + r.width / 2), dy = innerHeight / 2 - (r.top + r.height / 2);
+    const k = Math.max(innerWidth, innerHeight) / r.width * 1.6;
+    b.style.zIndex = 50; b.style.transition = 'transform .5s cubic-bezier(.5,0,.75,0), opacity .5s ease-in';
+    b.style.transform = 'translate(calc(-50% + ' + dx + 'px), calc(-50% + ' + dy + 'px)) scale(' + k + ')'; b.style.opacity = '0';
+    document.body.classList.add('zooming');
+    setTimeout(() => { openMod(b.dataset.open, b);
+      b.style.transition = 'none'; b.style.transform = ''; b.style.opacity = ''; b.style.zIndex = '';
+      requestAnimationFrame(() => { b.style.transition = ''; document.body.classList.remove('zooming'); zooming = false; }); }, 480);
+  }
   $('closeBtn').addEventListener('click', closeMod); veil.addEventListener('click', closeMod);
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && sheet.classList.contains('open')) closeMod(); });
 
