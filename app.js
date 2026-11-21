@@ -1,8 +1,9 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '3.16';
+  const VERSION = '3.17';
   const CHANGELOG = [
+    { v: '3.17', d: '2026-11-21', items: ['PayPay証券・Bitget・bitFlyer・十六銀行は iPhone のショートカット（PAYPAY / BITGET / BITFLYER / JUROKU）経由でアプリを開く。ブラウザ用リンクは下に'] },
     { v: '3.16', d: '2026-11-21', items: ['TradingView はまずアプリを直接呼ぶ。開かなかったときだけ前のリンク（チャートのページ）を開く'] },
     { v: '3.15', d: '2026-11-21', items: ['TradingView のリンクをチャートのページからトップに変更（アプリが「表示専用モード」で開かないように）'] },
     { v: '3.14', d: '2026-11-21', items: ['顔の位置を前と今の中間に。目がデータパネルにかからない位置'] },
