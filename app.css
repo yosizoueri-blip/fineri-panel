@@ -402,3 +402,9 @@ body.eyes-shut .backdrop .face:not(.shut) { opacity: 0; }
   .pc-side .dp .row b { min-width: 88px; }
   .pc-l .pc-only:not(.pc-grow) { display: none; }
 }
+/* PC: drop the core and earth lower and lift the face a little so アングロ's eyes stay clear */
+@media (min-width: 1100px) and (min-height: 601px) {
+  .sky { height: clamp(150px, 31dvh, 340px); }
+  .backdrop .face { top: calc(var(--fw) * -0.135); }
+}
+@media (min-width: 1100px) and (min-height: 601px) and (max-height: 900px) { .sky { height: 25dvh; } }
