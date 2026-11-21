@@ -1,8 +1,14 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '3.7';
+  const VERSION = '3.8';
   const CHANGELOG = [
+    { v: '3.8', d: '2026-11-21', items: [
+      '下のバーに TRADE を追加（TradingView・PayPay証券・Bitget・bitFlyer・十六銀行）。重なっていた MUMEI と入れ替え',
+      '丸ボタンが手前に飛んでくるとき、透けずにしっかり見えるように',
+      '下のバーのボタンはノイズが走って画面が切り替わる演出に',
+      '開いた先のページの奥に、顔の絵とテーマの模様を重ねた二重露光',
+    ] },
     { v: '3.7', d: '2026-11-21', items: [
       '太陽と月が時刻に合わせて地球のまわりを回る（横の軸で回転）。うしろから昇って、頂上を越え、手前に沈む',
       '昼の月は少し薄く。奥にあるときは地球に隠れる',
@@ -504,33 +510,97 @@
 
   /* ---------- sheet ---------- */
   const sheet = $('sheet'), veil = $('veil');
-  const TITLES = { talk: ['COMMS', '無名と話す'], market: ['MARKET', '相場'], keiba: ['KEIBA', '競馬'], tasks: ['TASKS', 'やること'], memory: ['MEMORY', '記憶庫'], forest: ['FOREST', 'エルフの森'], games: ['GAMES', 'ゲーム'], updates: ['UPDATES', '更新履歴'] };
+  const TITLES = { talk: ['COMMS', '無名と話す'], market: ['MARKET', '相場'], trade: ['TRADE', 'トレード'], keiba: ['KEIBA', '競馬'], tasks: ['TASKS', 'やること'], memory: ['MEMORY', '記憶庫'], forest: ['FOREST', 'エルフの森'], games: ['GAMES', 'ゲーム'], updates: ['UPDATES', '更新履歴'] };
+  // double exposure behind each page: the face, filled with a motif that matches the page's title
+  const artCv = $('sheetArt'), faceImg = new Image(), forestImg = new Image(), nuImg = new Image();
+  faceImg.src = 'bg-face.webp'; forestImg.src = 'forest.jpg'; nuImg.src = 'nu-honto.jpg';
+  function rnd(seed) { return () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }; }
+  function motif(g, name, W, H, col) {
+    const r = rnd(name.length * 7919 + 13); g.strokeStyle = col; g.fillStyle = col; g.lineWidth = Math.max(1.5, W / 220); g.shadowColor = col; g.shadowBlur = W / 60;
+    const cover = im => { if (!im.complete || !im.naturalWidth) return; const s = Math.max(W / im.naturalWidth, H / im.naturalHeight); g.drawImage(im, (W - im.naturalWidth * s) / 2, (H - im.naturalHeight * s) / 2, im.naturalWidth * s, im.naturalHeight * s); };
+    if (name === 'market' || name === 'trade') { // candlesticks over a rising/falling line
+      const n = 22, cw = W / n; let p = H * .62;
+      for (let i = 0; i < n; i++) { const o = p; p = Math.max(H * .25, Math.min(H * .8, p + (r() - .55) * H * .09)); const hi = Math.min(o, p) - r() * H * .05, lo = Math.max(o, p) + r() * H * .05, x = i * cw + cw / 2;
+        g.globalAlpha = .9; g.beginPath(); g.moveTo(x, hi); g.lineTo(x, lo); g.stroke(); g.globalAlpha = o > p ? .9 : .45; g.fillRect(x - cw * .3, Math.min(o, p), cw * .6, Math.max(2, Math.abs(p - o))); }
+      g.globalAlpha = .5; for (let y = 0; y < H; y += H / 12) { g.fillRect(0, y, W, 1); }
+      if (name === 'trade') for (let i = 0; i < 18; i++) { g.globalAlpha = .35; g.fillRect(W - r() * W * .35, H * .1 + i * H * .045, W, H * .03); }
+    } else if (name === 'keiba') { // turf: oval rails and speed lines
+      g.globalAlpha = .8; for (let i = 0; i < 7; i++) { g.beginPath(); g.ellipse(W / 2, H * .6, W * (.3 + i * .07), H * (.16 + i * .04), -.15, 0, TAU); g.stroke(); }
+      for (let i = 0; i < 40; i++) { const y = r() * H, x = r() * W; g.globalAlpha = .3 + r() * .5; g.fillRect(x, y, W * (.1 + r() * .3), Math.max(1, H / 500)); }
+    } else if (name === 'memory') { // synapse web
+      const P = Array.from({ length: 60 }, () => [r() * W, r() * H]); g.globalAlpha = .5;
+      P.forEach((a, i) => P.slice(i + 1).forEach(b => { if (Math.hypot(a[0] - b[0], a[1] - b[1]) < W * .2) { g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke(); } }));
+      g.globalAlpha = 1; P.forEach(a => { g.beginPath(); g.arc(a[0], a[1], W / 160, 0, TAU); g.fill(); });
+    } else if (name === 'tasks') { // circuit board
+      g.globalAlpha = .7; for (let i = 0; i < 70; i++) { let x = Math.round(r() * 24) * W / 24, y = Math.round(r() * 40) * H / 40; g.beginPath(); g.moveTo(x, y);
+        for (let k = 0; k < 4; k++) { if (r() < .5) x += (r() < .5 ? -1 : 1) * W / 12; else y += (r() < .5 ? -1 : 1) * H / 20; g.lineTo(x, y); } g.stroke(); g.fillRect(x - 2, y - 2, 4, 4); }
+    } else if (name === 'games') { // voxel blocks
+      const s = W / 14; for (let i = 0; i < 90; i++) { const x = Math.floor(r() * 15) * s, y = Math.floor(r() * (H / s)) * s; g.globalAlpha = .2 + r() * .6; g.strokeRect(x + 2, y + 2, s - 4, s - 4); if (r() < .3) g.fillRect(x + 4, y + 4, s - 8, s - 8); }
+    } else if (name === 'forest') { g.globalAlpha = 1; cover(forestImg);
+    } else if (name === 'talk') { g.globalAlpha = 1; cover(nuImg); g.globalAlpha = .6; for (let i = 0; i < 9; i++) { g.beginPath(); g.arc(W / 2, H * .45, W * (.1 + i * .08), 0, TAU); g.stroke(); }
+    } else { // updates: falling hex columns
+      g.font = (W / 34) + 'px monospace'; for (let c = 0; c < 26; c++) for (let k = 0; k < 40; k++) { if (r() < .4) continue; g.globalAlpha = r() * .8; g.fillText((r() * 256 | 0).toString(16).padStart(2, '0'), c * W / 26, k * H / 40); }
+    }
+    g.globalAlpha = 1; g.shadowBlur = 0;
+  }
+  function drawArt(name) {
+    const d = Math.min(2, devicePixelRatio || 1), W = artCv.clientWidth * d, H = artCv.clientHeight * d; if (!W || !H) return;
+    artCv.width = W; artCv.height = H; const g = artCv.getContext('2d'), c = getComputedStyle(document.documentElement).getPropertyValue('--c').trim() || '#6cf';
+    // 1) the motif, 2) cut to the face's shape, 3) the face itself faintly on top (screen)
+    motif(g, name, W, H, c);
+    if (faceImg.complete && faceImg.naturalWidth) { const s = Math.max(W / faceImg.naturalWidth, H * .9 / faceImg.naturalHeight), fw = faceImg.naturalWidth * s, fh = faceImg.naturalHeight * s, fx = (W - fw) / 2, fy = H * .02;
+      g.globalCompositeOperation = 'destination-in'; g.drawImage(faceImg, fx, fy, fw, fh);
+      g.globalCompositeOperation = 'screen'; g.globalAlpha = .4; g.drawImage(faceImg, fx, fy, fw, fh); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; }
+  }
   let lastFocus = null;
   function openMod(name, from) {
     lastFocus = from || null;
     document.querySelectorAll('.mod').forEach(m => { m.hidden = m.dataset.mod !== name; });
     $('sheetEn').textContent = TITLES[name][0]; $('sheetJa').textContent = TITLES[name][1];
-    sheet.classList.add('open'); veil.classList.add('open'); $('closeBtn').focus({ preventScroll: true });
+    sheet.classList.add('open'); veil.classList.add('open'); requestAnimationFrame(() => drawArt(name)); $('closeBtn').focus({ preventScroll: true });
     if (TITLES[name] && name !== 'updates') { usage[name] = (usage[name] || 0) + 1; save('fineri.usage', usage); setTimeout(placeButtons, 400); }
   }
   function closeMod() { sheet.classList.remove('open'); veil.classList.remove('open'); if (lastFocus) lastFocus.focus({ preventScroll: true }); }
   document.addEventListener('click', e => {
     const o = e.target.closest('[data-open]');
     if (o && o.classList.contains('gbtn') && !reduce) { zoomOpen(o); return; }
+    if (o && o.closest('.dock')) { glitch(() => openMod(o.dataset.open, o)); return; }
     if (o) { openMod(o.dataset.open, o); return; }
-    const h = e.target.closest('[data-href]'); if (h) { location.href = h.dataset.href; }
+    const h = e.target.closest('[data-href]'); if (h) { const go = () => { location.href = h.dataset.href; }; h.closest('.dock') ? glitch(go) : go(); }
   });
+  // dock buttons: signal noise tears across the screen, then the page cuts in
+  const glCv = document.createElement('canvas'); glCv.id = 'glitch'; glCv.setAttribute('aria-hidden', 'true'); document.body.append(glCv);
+  let glitching = false;
+  function glitch(done) {
+    if (reduce) { done(); return; }
+    if (glitching) return; glitching = true;
+    const w = 96, h = Math.round(96 * innerHeight / innerWidth); glCv.width = w; glCv.height = h;
+    const g = glCv.getContext('2d'), img = g.createImageData(w, h), hue = getComputedStyle(document.documentElement).getPropertyValue('--h');
+    document.body.classList.add('glitching'); const t0 = performance.now(); let fired = false;
+    (function step() {
+      const e = performance.now() - t0, k = e < 260 ? e / 260 : 1 - (e - 260) / 300;
+      for (let i = 0; i < img.data.length; i += 4) { const v = Math.random() * 255 * (Math.random() < .5 ? 1 : .35); img.data[i] = v * .55; img.data[i + 1] = v * .85; img.data[i + 2] = v; img.data[i + 3] = 255 * Math.max(0, k) * .55; }
+      g.putImageData(img, 0, 0);
+      for (let i = 0; i < 6; i++) { const y = Math.random() * h, bh = 1 + Math.random() * 4;
+        g.fillStyle = ['hsla(' + hue + ',100%,60%,.8)', 'rgba(255,40,80,.6)', 'rgba(255,255,255,.7)', 'rgba(0,0,0,.8)'][i % 4];
+        g.fillRect(Math.random() * w * .4 - w * .2, y, w * (.5 + Math.random()), bh); }
+      document.body.style.setProperty('--gx', ((Math.random() - .5) * 14 * Math.max(0, k)).toFixed(1) + 'px');
+      if (e > 240 && !fired) { fired = true; done(); }
+      if (e < 560) requestAnimationFrame(step);
+      else { g.clearRect(0, 0, w, h); document.body.classList.remove('glitching'); document.body.style.removeProperty('--gx'); glitching = false; }
+    })();
+  }
   // press a round button: it flies to the centre and grows until it fills the screen, then the page opens
   let zooming = false;
   function zoomOpen(b) {
     if (zooming) return; zooming = true;
     const r = b.getBoundingClientRect(), dx = innerWidth / 2 - (r.left + r.width / 2), dy = innerHeight / 2 - (r.top + r.height / 2);
     const k = Math.max(innerWidth, innerHeight) / r.width * 1.6;
-    b.style.zIndex = 50; b.style.transition = 'transform .5s cubic-bezier(.5,0,.75,0), opacity .5s ease-in';
+    b.style.zIndex = 50; b.classList.add('flying'); b.style.transition = 'transform .5s cubic-bezier(.5,0,.75,0), opacity .12s ease-in .38s';
     b.style.transform = 'translate(calc(-50% + ' + dx + 'px), calc(-50% + ' + dy + 'px)) scale(' + k + ')'; b.style.opacity = '0';
     document.body.classList.add('zooming');
     setTimeout(() => { openMod(b.dataset.open, b);
-      b.style.transition = 'none'; b.style.transform = ''; b.style.opacity = ''; b.style.zIndex = '';
+      b.style.transition = 'none'; b.style.transform = ''; b.style.opacity = ''; b.style.zIndex = ''; b.classList.remove('flying');
       requestAnimationFrame(() => { b.style.transition = ''; document.body.classList.remove('zooming'); zooming = false; }); }, 480);
   }
   $('closeBtn').addEventListener('click', closeMod); veil.addEventListener('click', closeMod);

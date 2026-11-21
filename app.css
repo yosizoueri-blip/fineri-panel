@@ -291,3 +291,12 @@ a.card:hover, a.card:focus-visible { background: linear-gradient(90deg, hsl(var(
 body.zooming .app > :not(.mid), body.zooming .dp, body.zooming #core, body.zooming #links { transition: opacity .4s; opacity: .15; }
 
 #wxfx { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+
+/* v3.8 */
+.gbtn.flying .face { background: radial-gradient(120% 90% at 30% 20%, hsl(var(--h) 60% 30%), hsl(var(--h) 70% 7%) 70%); -webkit-backdrop-filter: none; backdrop-filter: none; }
+#glitch { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 60; pointer-events: none; image-rendering: pixelated; mix-blend-mode: screen; opacity: 0; }
+body.glitching #glitch { opacity: 1; }
+body.glitching .app, body.glitching .sheet.open { transform: translateX(var(--gx, 0)); filter: drop-shadow(3px 0 0 rgba(255,40,80,.5)) drop-shadow(-3px 0 0 hsl(var(--h) 100% 60% / .6)); }
+.sheet-art { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; opacity: .42; mix-blend-mode: screen;
+  -webkit-mask-image: linear-gradient(transparent, #000 10%, #000 80%, transparent); mask-image: linear-gradient(transparent, #000 10%, #000 80%, transparent); }
+.sheet-head, .sheet-body { position: relative; z-index: 1; }
