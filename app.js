@@ -1,8 +1,9 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '3.17';
+  const VERSION = '3.18';
   const CHANGELOG = [
+    { v: '3.18', d: '2026-11-21', items: ['夜は太陽が地球のうしろへ消えるように（夕方から薄れていく）', '月の下側が光って見えていたのを修正（大気の光が月にかぶっていた）', '月を明るく。満ち欠けは空で見える向きのまま'] },
     { v: '3.17', d: '2026-11-21', items: ['PayPay証券・Bitget・bitFlyer・十六銀行は iPhone のショートカット（PAYPAY / BITGET / BITFLYER / JUROKU）経由でアプリを開く。ブラウザ用リンクは下に'] },
     { v: '3.16', d: '2026-11-21', items: ['TradingView はまずアプリを直接呼ぶ。開かなかったときだけ前のリンク（チャートのページ）を開く'] },
     { v: '3.15', d: '2026-11-21', items: ['TradingView のリンクをチャートのページからトップに変更（アプリが「表示専用モード」で開かないように）'] },
@@ -308,7 +309,7 @@
     for (let py = 0; py < size; py++) for (let px = 0; px < size; px++) {
       const X = (px + .5) / size * 2 - 1, Y = (py + .5) / size * 2 - 1, r2 = X * X + Y * Y; if (r2 > 1) continue;
       const Z = Math.sqrt(1 - r2), diff = Math.max(0, X * L[0] - Y * L[1] + Z * L[2]), term = Math.min(1, diff * 6);
-      const a = M.data[(((py / size * M.height) | 0) * M.width + ((px / size * M.width) | 0)) * 4] / 255, v = a * (.035 + 1.1 * Math.pow(diff, .7) * term) * 255;
+      const a = M.data[(((py / size * M.height) | 0) * M.width + ((px / size * M.width) | 0)) * 4] / 255, v = a * (.03 + 1.45 * Math.pow(diff, .7) * term) * 255;
       const k = (py * size + px) * 4; o[k] = Math.min(255, v * (full ? 1.15 : 1)); o[k + 1] = Math.min(255, v * (full ? .5 : 1)); o[k + 2] = Math.min(255, v * (full ? .5 : 1.03));
       o[k + 3] = 255 * Math.min(1, (1 - Math.sqrt(r2)) * size * .5); }
     g.putImageData(img, 0, 0);
@@ -331,7 +332,8 @@
     const sun = orbit((hr - 12) / 24 * TAU), moon = orbit((hr - transit) / 24.84 * TAU);
     { const br = earthCv.getBoundingClientRect(); sunAt = [sun.x / d + br.left, sun.y / d + br.top]; }
     const vis = o => o.y - o.D < H && o.y + o.D * 3 > 0;
-    function drawSun(o) { const x = o.x, y = o.y, r = o.D / 2, soft = 1 + cl * 2.2;
+    const fadeBehind = o => Math.max(0, Math.min(1, 1 + o.z / .45));
+    function drawSun(o) { const x = o.x, y = o.y, r = o.D / 2, soft = 1 + cl * 2.2; ex.save(); ex.globalAlpha = fadeBehind(o);
       const co = ex.createRadialGradient(x, y, r * .6, x, y, r * 4.5 * soft); co.addColorStop(0, 'rgba(255,236,190,' + .6 * (1 - cl * .5) + ')'); co.addColorStop(.25, 'rgba(255,200,120,' + .2 * (1 - cl * .4) + ')'); co.addColorStop(1, 'rgba(255,170,80,0)');
       ex.fillStyle = co; ex.beginPath(); ex.arc(x, y, r * 4.5 * soft, 0, TAU); ex.fill();
       if (cl < .6 && !reduce) { ex.save(); ex.translate(x, y); ex.rotate(t * .00004); ex.globalCompositeOperation = 'lighter';
@@ -340,14 +342,15 @@
         ex.restore(); }
       const a = 1 - cl * .55, disc = ex.createRadialGradient(x - r * .1, y - r * .1, 0, x, y, r * (1 + cl * .8));
       disc.addColorStop(0, 'rgba(255,255,245,' + a + ')'); disc.addColorStop(.55, 'rgba(255,240,190,' + a + ')'); disc.addColorStop(Math.max(.6, .93 - cl * .3), 'rgba(255,190,90,' + a + ')'); disc.addColorStop(1, 'rgba(255,170,60,0)');
-      ex.fillStyle = disc; ex.beginPath(); ex.arc(x, y, r * (1 + cl * .8), 0, TAU); ex.fill();
+      ex.fillStyle = disc; ex.beginPath(); ex.arc(x, y, r * (1 + cl * .8), 0, TAU); ex.fill(); ex.restore();
       }
     function drawMoon(o) { const x = o.x, y = o.y, D = o.D, key = Math.round(D0) + ':' + age.toFixed(2);
       if (performance.now() - moonCache.at > 60e3 || moonCache.key !== key) { renderMoon(D0, age, full); moonCache.at = performance.now(); moonCache.key = key; }
-      const day = sunUp ? .55 : 1, glow = full ? 'rgba(255,70,80,' : 'rgba(210,225,255,', gr = ex.createRadialGradient(x, y, D * .45, x, y, D * (1.6 + cl));
+      const day = (sunUp ? .55 : 1) * fadeBehind(o), glow = full ? 'rgba(255,70,80,' : 'rgba(210,225,255,', gr = ex.createRadialGradient(x, y, D * .45, x, y, D * (1.6 + cl));
       gr.addColorStop(0, glow + (full ? .6 : .35) * (1 - cl * .5) * day + ')'); gr.addColorStop(1, glow + '0)');
       ex.fillStyle = gr; ex.beginPath(); ex.arc(x, y, D * (1.6 + cl), 0, TAU); ex.fill();
-      ex.globalAlpha = (1 - cl * .45) * day; ex.drawImage(moonCache.cv, x - D / 2, y - D / 2, D, D); ex.globalAlpha = 1; }
+      ex.globalAlpha = (1 - cl * .45) * day; ex.drawImage(moonCache.cv, x - D / 2, y - D / 2, D, D);
+      ex.globalCompositeOperation = 'screen'; ex.globalAlpha *= .7; ex.drawImage(moonCache.cv, x - D / 2, y - D / 2, D, D); ex.globalCompositeOperation = 'source-over'; ex.globalAlpha = 1; }
     const bodies = [[sun, drawSun], [moon, drawMoon]].filter(([o]) => vis(o));
     // behind the earth first (farthest first)
     bodies.filter(([o]) => o.z <= 0).sort((p, q) => p[0].z - q[0].z).forEach(([o, f]) => f(o));
@@ -358,10 +361,10 @@
       if (performance.now() - earthCache.at > 1500 || earthCache.key !== key) { renderEarth(R, top, H); earthCache.at = performance.now(); earthCache.key = key; }
       ex.drawImage(earthCache.cv, gx - R, top);
     }
-    // in front of the earth
-    bodies.filter(([o]) => o.z > 0).sort((p, q) => p[0].z - q[0].z).forEach(([o, f]) => f(o));
     const atm = ex.createRadialGradient(gx, gy, R * .97, gx, gy, R * 1.08); atm.addColorStop(0, 'rgba(120,180,255,.5)'); atm.addColorStop(1, 'rgba(120,180,255,0)');
     ex.fillStyle = atm; ex.beginPath(); ex.arc(gx, gy, R * 1.08, 0, TAU); ex.fill();
+    // in front of the earth
+    bodies.filter(([o]) => o.z > 0).sort((p, q) => p[0].z - q[0].z).forEach(([o, f]) => f(o));
   }
 
   /* ---------- weather layer: real conditions, drawn faintly over the background ---------- */
