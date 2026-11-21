@@ -1,8 +1,9 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '3.18';
+  const VERSION = '3.19';
   const CHANGELOG = [
+    { v: '3.19', d: '2026-11-21', items: ['中央の光るリングが相場で色づく: 外側=BTC、内側=日経平均。直近1時間で上がれば緑、下がれば赤。±5%でいちばん濃く'] },
     { v: '3.18', d: '2026-11-21', items: ['夜は太陽が地球のうしろへ消えるように（夕方から薄れていく）', '月の下側が光って見えていたのを修正（大気の光が月にかぶっていた）', '月を明るく。満ち欠けは空で見える向きのまま'] },
     { v: '3.17', d: '2026-11-21', items: ['PayPay証券・Bitget・bitFlyer・十六銀行は iPhone のショートカット（PAYPAY / BITGET / BITFLYER / JUROKU）経由でアプリを開く。ブラウザ用リンクは下に'] },
     { v: '3.16', d: '2026-11-21', items: ['TradingView はまずアプリを直接呼ぶ。開かなかったときだけ前のリンク（チャートのページ）を開く'] },
@@ -454,19 +455,24 @@
       cx.strokeStyle = col(k % 10 ? .25 : .6); cx.lineWidth = 1 * u; cx.beginPath(); cx.moveTo(c + r1 * Math.cos(a), cy + r1 * Math.sin(a)); cx.lineTo(c + r2 * Math.cos(a), cy + r2 * Math.sin(a)); cx.stroke(); }
     // glowing segment rings spinning about the vertical axis, outer and inner in opposite directions
     const segRot = reduce ? 0 : t * .00003, spin = reduce ? .5 : t * .0005;
-    const ring3d = (R, n, gap, phi, w, a0, glow) => {
+    // ring colour follows the market: green when up, red when down over the last hour, deepest at ±5%
+    const mk = (pct, a) => { if (!pct) return null; const m = Math.pow(Math.min(1, Math.abs(pct) / 5), .6);
+      return { m, c: pct > 0 ? 'hsla(150,100%,' + (62 - 12 * m) + '%,' + a + ')' : 'hsla(352,100%,' + (62 - 10 * m) + '%,' + a + ')' }; };
+    const ring3d = (R, n, gap, phi, w, a0, glow, pct) => {
       const cp = Math.cos(phi), sp = Math.sin(phi);
       const segs = [];
       for (let k = 0; k < n; k++) { const s0 = k * TAU / n + segRot + gap, s1 = (k + 1) * TAU / n + segRot - gap, pts = []; let z = 0;
         for (let j = 0; j <= 14; j++) { const q = s0 + (s1 - s0) * j / 14, ca = Math.cos(q); pts.push([c + R * ca * cp, cy + R * Math.sin(q)]); z += ca * sp; }
         segs.push({ pts, z: z / 15 }); }
       segs.sort((p, q) => p.z - q.z).forEach(sg => { const k = .35 + .65 * (sg.z + 1) / 2;
-        cx.lineCap = 'butt'; cx.shadowColor = col(1); cx.shadowBlur = glow * k;
-        cx.lineWidth = w; cx.strokeStyle = col(a0 * k); cx.beginPath(); sg.pts.forEach((p, i) => i ? cx.lineTo(p[0], p[1]) : cx.moveTo(p[0], p[1])); cx.stroke();
+        const mc = mk(pct, 1), m = mc ? mc.m : 0;
+        cx.lineCap = 'butt'; cx.shadowColor = m > .35 ? mc.c : col(1); cx.shadowBlur = glow * k;
+        cx.lineWidth = w; cx.strokeStyle = col(a0 * k * (1 - m)); cx.beginPath(); sg.pts.forEach((p, i) => i ? cx.lineTo(p[0], p[1]) : cx.moveTo(p[0], p[1])); cx.stroke();
+        if (m) { cx.strokeStyle = mk(pct, a0 * k * (.35 + .65 * m)).c; cx.stroke(); }
         cx.shadowBlur = 0; cx.lineWidth = w * .25; cx.strokeStyle = 'rgba(255,255,255,' + (.55 * k) + ')'; cx.stroke(); });
     };
-    ring3d(118 * u, 8, .07, spin, 12 * u, .95, 18 * u);
-    ring3d(92 * u, 6, .1, -spin + Math.PI / 2, 7 * u, .85, 14 * u);
+    ring3d(118 * u, 8, .07, spin, 12 * u, .95, 18 * u, signal.test === 'up' ? 5 : signal.test === 'down' ? -5 : signal.test === 'split' ? 2 : signal.btc);
+    ring3d(92 * u, 6, .1, -spin + Math.PI / 2, 7 * u, .85, 14 * u, signal.test === 'up' ? 5 : signal.test === 'down' ? -5 : signal.test === 'split' ? -2 : signal.nk);
     // counter ring
     cx.setLineDash([4 * u, 6 * u]); cx.strokeStyle = col(.5); cx.lineWidth = 1.2 * u; cx.beginPath(); cx.arc(c, cy, 100 * u, -t * .00012, -t * .00012 + TAU); cx.stroke(); cx.setLineDash([]);
     // inner metal bezel (3D)
