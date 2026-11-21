@@ -330,3 +330,9 @@ body.glitching .app, body.glitching .sheet.open { transform: translateX(var(--gx
 .dp.dp-btn::before { width: 30%; left: 35%; right: auto; }
 .dp.dp-btn[data-open]:hover, .dp.dp-btn[data-open]:focus-visible { box-shadow: inset 0 1px 0 hsl(var(--h) 100% 80% / .5), inset 0 0 16px hsl(var(--h) 90% 55% / .3), 0 0 16px hsl(var(--h) 90% 55% / .4); }
 .dp-race.dp-btn { max-width: 56%; } .dp-race .row { flex-wrap: nowrap; }
+
+/* v3.21: Anglo closes her eyes during break times */
+.backdrop .face.shut { background-image: url(bg-face-closed.webp); opacity: 0; transition: opacity 1.6s ease; }
+body.eyes-shut .backdrop .face.shut { opacity: .62; }
+.backdrop .face:not(.shut) { transition: opacity 1.6s ease; }
+body.eyes-shut .backdrop .face:not(.shut) { opacity: 0; }

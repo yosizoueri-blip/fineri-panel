@@ -1,8 +1,9 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '3.20';
+  const VERSION = '3.21';
   const CHANGELOG = [
+    { v: '3.21', d: '2026-11-21', items: ['顔の絵（アングロ）が休憩時間に目を閉じる: 10:00〜10:15、12:00〜13:00、15:00〜15:15'] },
     { v: '3.20', d: '2026-11-21', items: ['光るリングが回ると、手前の半分は宝石の前を通るように（今までずっと宝石のうしろだった）'] },
     { v: '3.19', d: '2026-11-21', items: ['中央の光るリングが相場で色づく: 外側=BTC、内側=日経平均。直近1時間で上がれば緑、下がれば赤。±5%でいちばん濃く'] },
     { v: '3.18', d: '2026-11-21', items: ['夜は太陽が地球のうしろへ消えるように（夕方から薄れていく）', '月の下側が光って見えていたのを修正（大気の光が月にかぶっていた）', '月を明るく。満ち欠けは空で見える向きのまま'] },
@@ -703,6 +704,11 @@
   const nu = $('nu'), say = $('nuSay'); let realUntil = 0, sayTimer = 0;
   function nuSay(text, ms) { say.textContent = text; say.classList.add('show'); clearTimeout(sayTimer); sayTimer = setTimeout(() => say.classList.remove('show'), ms || 2600); }
   function nuClock(n) { const h = n.getUTCHours(); nu.classList.toggle('is-real', h === 12 || Date.now() < realUntil); }
+  // Anglo (the face) closes her eyes during breaks: 10:00-10:15, 12:00-13:00, 15:00-15:15 JST
+  const BREAKS = [[600, 615], [720, 780], [900, 915]];
+  function angloEyes() { const n = jst(), m = n.getUTCHours() * 60 + n.getUTCMinutes();
+    document.body.classList.toggle('eyes-shut', BREAKS.some(([a, b]) => m >= a && m < b)); }
+  angloEyes(); setInterval(angloEyes, 20e3);
   nu.addEventListener('click', () => { realUntil = Date.now() + 6000; nuClock(jst()); nuSay(jst().getUTCHours() === 12 ? 'お昼はこの姿でいるね' : '……ちょっとだけ、本当の姿'); });
   const lines = ['きゅー', '森の見回り中', '……（しっぽふりふり）', 'fineri、あそぼ', 'ねむい……'];
   (function idle() { if (!reduce && !sheet.classList.contains('open')) { nu.classList.remove('glitch'); void nu.offsetWidth; nu.classList.add('glitch'); if (Math.random() < .4) nuSay(lines[(Math.random() * lines.length) | 0]); } setTimeout(idle, 8000 + Math.random() * 9000); })();
