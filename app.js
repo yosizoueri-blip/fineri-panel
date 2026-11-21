@@ -1,8 +1,16 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '2.4';
+  const VERSION = '2.5';
   const CHANGELOG = [
+    { v: '2.5', d: '2026-11-21', items: [
+      'スクロールなしで1画面に収まるように',
+      '顔の絵を大きく、頭が画面の上に来るように。オプティマスは頭（脳）の中で光る',
+      'fin の絵を外した',
+      '太陽の輪郭をなくして天気に連動。曇りはぼやけて、晴れは太陽の方から光が差す。雨は細い雨すじ',
+      '下の時計とボタンもデータパネル風に。ボタンは英語に',
+      '相場のダブりを解消（相場は左のパネルだけ）',
+      '色は右上の COLOR ボタンから選ぶ形に'] },
     { v: '2.4', d: '2026-11-21', items: [
       '斜めに浮かぶデータパネルを追加（英語だけ）：相場 BTC／N225／KIOXIA／SPACEX、来週の重賞、動くテレメトリ',
       '左上の4つと日付もデータパネルに',
@@ -44,7 +52,7 @@
   function tick() {
     const n = jst();
     $('time').textContent = pad(n.getUTCHours()) + ':' + pad(n.getUTCMinutes()) + ':' + pad(n.getUTCSeconds());
-    $('date').textContent = n.getUTCFullYear() + '.' + pad(n.getUTCMonth() + 1) + '.' + pad(n.getUTCDate()) + ' (' + DAYS[n.getUTCDay()] + ')';
+    const st = sunTimes(n), hm = h => pad(Math.floor(h)) + ':' + pad(Math.round(h % 1 * 60) % 60); $('date').textContent = 'RISE ' + hm(st[0]) + '  SET ' + hm(st[1]);
     nuClock(n);
     $('sDate').textContent = n.getUTCFullYear() + '.' + pad(n.getUTCMonth() + 1) + '.' + pad(n.getUTCDate()) + ' ' + ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][n.getUTCDay()];
   }
@@ -65,9 +73,10 @@
   }
   TONES.forEach((t, i) => {
     const b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-label', 'ベース色 ' + t[0]);
-    b.style.background = t[2] ? '#eef4fa' : 'hsl(' + t[1] + ' 100% 60%)'; b.addEventListener('click', () => setTone(i)); tone.append(b);
+    b.style.background = t[2] ? '#eef4fa' : 'hsl(' + t[1] + ' 100% 60%)'; b.addEventListener('click', () => { setTone(i); tone.hidden = true; }); tone.append(b);
   });
   setTone(load('fineri.tone2', 0));
+  $('toneBtn').addEventListener('click', () => { tone.hidden = !tone.hidden; $('toneBtn').setAttribute('aria-expanded', String(!tone.hidden)); });
   const col = (a, l) => white ? 'hsla(205,45%,' + (l || 88) + '%,' + a + ')' : 'hsla(' + hue + ',100%,' + (l || 64) + '%,' + a + ')';
 
   /* ---------- canvases ---------- */
@@ -82,7 +91,7 @@
   // Real vault structure (graph.json: counts + links only). Laid out like Obsidian's graph,
   // centred on the core, so the connections read as a living brain behind the panel.
   let GRAPH = { n: 0, hub: 0, g: [], e: [] };
-  const field = $('field'), fx = field.getContext('2d'), stageEl = $('stage');
+  const field = $('field'), fx = field.getContext('2d'), faceEl = document.querySelector('.backdrop .face');
   let lay = [], deg = [], maxDeg = 1, pulses = [], waves = [], dust = [], nextWave = 0;
   function layout() {
     const N = GRAPH.n; let s = 7; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
@@ -110,7 +119,7 @@
     const byA = ids.map((_, k) => k).sort((x, y) => ang[x] - ang[y]), byD = ids.map((_, k) => k).sort((x, y) => dis[x] - dis[y]);
     const aR = [], dR = []; byA.forEach((k, r) => aR[k] = r); byD.forEach((k, r) => dR[k] = r);
     lay = new Array(N);
-    ids.forEach((i, k) => { const A = (aR[k] + .5) / ids.length * TAU + (rnd() - .5) * .12, R = .31 + dR[k] / ids.length * .27 + (rnd() - .5) * .03;
+    ids.forEach((i, k) => { const A = (aR[k] + .5) / ids.length * TAU + (rnd() - .5) * .15, R = .18 + Math.sqrt((dR[k] + .5) / ids.length) * .8 + (rnd() - .5) * .04;
       lay[i] = { x: Math.cos(A) * R, y: Math.sin(A) * R, ph: rnd() * TAU, sp: .3 + rnd() * .5 }; });
     lay[GRAPH.hub] = { x: 0, y: 0, ph: 0, sp: 0 };
     dust = []; for (let i = 0; i < 40; i++) dust.push({ x: rnd(), y: rnd(), ph: rnd() * TAU });
@@ -120,22 +129,23 @@
     // faint far-away dust over the whole screen
     dust.forEach(p => { fx.fillStyle = col(.08 + .06 * Math.sin(t * .001 + p.ph)); fx.beginPath(); fx.arc(p.x * W, p.y * H, 1 * d, 0, TAU); fx.fill(); });
     if (!lay.length) return;
-    const sr = stageEl.getBoundingClientRect(), cx0 = (sr.left + sr.width / 2) * d, cy0 = (sr.top + sr.height / 2) * d;
-    const RAD = sr.width * d, rot = reduce ? 0 : t * .000025, cs = Math.cos(rot), sn = Math.sin(rot);
-    const P = lay.map(n => { const wob = .008, x = n.x + Math.sin(t * .0004 * n.sp + n.ph) * wob, y = n.y + Math.cos(t * .00035 * n.sp + n.ph) * wob;
-      return [cx0 + (x * cs - y * sn) * RAD, cy0 + (x * sn + y * cs) * RAD]; });
+    // the brain: inside the head of the face artwork, so the links show through its skin
+    const fr = faceEl.getBoundingClientRect(), cx0 = (fr.left + fr.width * .5) * d, cy0 = (fr.top + fr.height * .245) * d;
+    const RX = fr.width * .24 * d, RY = fr.height * .12 * d, RAD = (RX + RY) / 2, rot = reduce ? 0 : t * .00004, cs = Math.cos(rot), sn = Math.sin(rot);
+    const P = lay.map(n => { const wob = .02, x = n.x + Math.sin(t * .0004 * n.sp + n.ph) * wob, y = n.y + Math.cos(t * .00035 * n.sp + n.ph) * wob;
+      return [cx0 + (x * cs - y * sn) * RX, cy0 + (x * sn + y * cs) * RY]; });
+    const sc = Math.max(.7, Math.min(1.4, RAD / (110 * d)));
     // heartbeat: a wave leaves the hub every few seconds and lights the links it reaches
     if (!reduce && t > nextWave) { waves.push(t); nextWave = t + 4200; }
     waves = waves.filter(w => t - w < 2200);
-    const hubP = P[GRAPH.hub], waveLit = (x, y) => { let v = 0; waves.forEach(w => { const r = (.24 + (t - w) / 2200 * .42) * RAD, dd = Math.abs(Math.hypot(x - hubP[0], y - hubP[1]) - r); v = Math.max(v, Math.max(0, 1 - dd / (RAD * .06)) * (1 - (t - w) / 2200)); }); return v; };
-    // keep the crystal chamber clear: draw only outside it
-    fx.save(); fx.beginPath(); fx.rect(0, 0, W, H); fx.arc(cx0, cy0, sr.width * .26 * d, 0, TAU, true); fx.clip();
+    const hubP = P[GRAPH.hub], waveLit = (x, y) => { let v = 0; waves.forEach(w => { const r = (t - w) / 2200 * 1.1 * RAD, dd = Math.abs(Math.hypot(x - hubP[0], y - hubP[1]) - r); v = Math.max(v, Math.max(0, 1 - dd / (RAD * .12)) * (1 - (t - w) / 2200)); }); return v; };
+    fx.save();
     // links: glow underlay + bright core line
     fx.lineCap = 'round';
     GRAPH.e.forEach(([a, b]) => {
       const A = P[a], B = P[b], w = (deg[a] + deg[b]) / (2 * maxDeg), lit = waveLit((A[0] + B[0]) / 2, (A[1] + B[1]) / 2);
-      fx.strokeStyle = col(.10 + .18 * lit); fx.lineWidth = (4 + 3 * w) * d; fx.beginPath(); fx.moveTo(A[0], A[1]); fx.lineTo(B[0], B[1]); fx.stroke();
-      fx.strokeStyle = col(.34 + .3 * w + .4 * lit, 72); fx.lineWidth = (1 + .9 * w) * d; fx.beginPath(); fx.moveTo(A[0], A[1]); fx.lineTo(B[0], B[1]); fx.stroke();
+      fx.strokeStyle = col(.10 + .18 * lit); fx.lineWidth = (4 + 3 * w) * d * sc; fx.beginPath(); fx.moveTo(A[0], A[1]); fx.lineTo(B[0], B[1]); fx.stroke();
+      fx.strokeStyle = col(.34 + .3 * w + .4 * lit, 72); fx.lineWidth = (1 + .9 * w) * d * sc; fx.beginPath(); fx.moveTo(A[0], A[1]); fx.lineTo(B[0], B[1]); fx.stroke();
     });
     // light running along the links (comet with a tail)
     if (!reduce && GRAPH.e.length) for (let k = 0; k < 2; k++) if (Math.random() < .2 && pulses.length < 26) { const e = GRAPH.e[(Math.random() * GRAPH.e.length) | 0]; pulses.push({ a: e[Math.random() < .5 ? 0 : 1], e, k: 0, v: .008 + Math.random() * .008 }); }
@@ -150,7 +160,7 @@
     }
     // nodes: size and glow by how many links they have
     lay.forEach((n, i) => {
-      const w = deg[i] / maxDeg, x = P[i][0], y = P[i][1], lit = waveLit(x, y), r = (1.8 + 5 * Math.sqrt(w)) * d, br = .55 + .25 * Math.sin(t * .002 + n.ph) + .3 * lit;
+      const w = deg[i] / maxDeg, x = P[i][0], y = P[i][1], lit = waveLit(x, y), r = (1.8 + 5 * Math.sqrt(w)) * d * sc, br = .55 + .25 * Math.sin(t * .002 + n.ph) + .3 * lit;
       const g = fx.createRadialGradient(x, y, 0, x, y, r * 4.5); g.addColorStop(0, col(.35 * br + .2 * w)); g.addColorStop(1, col(0));
       fx.fillStyle = g; fx.beginPath(); fx.arc(x, y, r * 4.5, 0, TAU); fx.fill();
       fx.fillStyle = col(Math.min(1, .6 + .4 * br), 80); fx.beginPath(); fx.arc(x, y, r, 0, TAU); fx.fill();
@@ -179,11 +189,14 @@
     const [rise, set] = sunTimes(n); const sf = (hr - rise) / (set - rise);
     if (sf > 0 && sf < 1) {
       const x = arcX(sf), y = arcY(sf), r = 13 * d;
-      const g = sx.createRadialGradient(x, y, 0, x, y, r * 4); g.addColorStop(0, 'rgba(255,240,200,.9)'); g.addColorStop(.25, 'rgba(255,200,120,.35)'); g.addColorStop(1, 'rgba(255,180,80,0)');
-      sx.fillStyle = g; sx.beginPath(); sx.arc(x, y, r * 4, 0, TAU); sx.fill();
-      sx.fillStyle = '#fff6dc'; sx.beginPath(); sx.arc(x, y, r, 0, TAU); sx.fill();
-      sx.strokeStyle = 'rgba(255,220,150,.5)'; sx.lineWidth = 1 * d; sx.setLineDash([2 * d, 4 * d]);
-      sx.beginPath(); sx.arc(x, y, r * 1.9, t * .0004, t * .0004 + TAU); sx.stroke(); sx.setLineDash([]);
+      const cl = wx.cloud, haze = r * (1 + cl * 3.2);
+      const g = sx.createRadialGradient(x, y, 0, x, y, r * 4 + haze); g.addColorStop(0, 'rgba(255,240,200,' + (.9 - cl * .45) + ')'); g.addColorStop(.25, 'rgba(255,200,120,' + (.35 - cl * .15) + ')'); g.addColorStop(1, 'rgba(255,180,80,0)');
+      sx.fillStyle = g; sx.beginPath(); sx.arc(x, y, r * 4 + haze, 0, TAU); sx.fill();
+      // the disc itself softens and fades as the sky clouds over
+      const disc = sx.createRadialGradient(x, y, 0, x, y, r * (1 + cl * 1.6)); disc.addColorStop(0, 'rgba(255,246,220,' + (1 - cl * .55) + ')');
+      disc.addColorStop(Math.max(.05, .92 - cl * .85), 'rgba(255,246,220,' + (1 - cl * .55) + ')'); disc.addColorStop(1, 'rgba(255,246,220,0)');
+      sx.fillStyle = disc; sx.beginPath(); sx.arc(x, y, r * (1 + cl * 1.6), 0, TAU); sx.fill();
+      sunAt = [x / d + sky.getBoundingClientRect().left, y / d + sky.getBoundingClientRect().top];
     }
     // moon
     const age = moonAge(Date.now()), transit = 12 + age * 24 / 29.530588853;
@@ -202,7 +215,35 @@
       sx.fillStyle = dark; sx.beginPath(); sx.arc(x, y, r, Math.PI / 2, -Math.PI / 2, !waxing); sx.fill();
       sx.fillStyle = k > 0 ? dark : lit; sx.beginPath(); sx.ellipse(x, y, Math.abs(k) * r + .01, r, 0, 0, TAU); sx.fill();
     }
+    // weather: drifting cloud veils and a few rain streaks, only as strong as the sky really is
+    if (wx.cloud > .3) for (let i = 0; i < 5; i++) {
+      const cx = ((i * .27 + t * .000008 * (1 + i * .3)) % 1.3 - .15) * W, cy = H * (.18 + (i % 3) * .14), rw = W * (.22 + (i % 2) * .1);
+      const g = sx.createRadialGradient(cx, cy, 0, cx, cy, rw); g.addColorStop(0, 'rgba(150,170,195,' + (.16 * (wx.cloud - .3) / .7) + ')'); g.addColorStop(1, 'rgba(150,170,195,0)');
+      sx.fillStyle = g; sx.save(); sx.translate(cx, cy); sx.scale(1, .32); sx.translate(-cx, -cy); sx.beginPath(); sx.arc(cx, cy, rw, 0, TAU); sx.fill(); sx.restore();
+    }
+    if (wx.rain && !reduce) { sx.strokeStyle = 'rgba(170,200,230,.22)'; sx.lineWidth = 1 * d; sx.beginPath();
+      for (let i = 0; i < 26; i++) { const x = ((i * 97.3 + t * .05) % W), y = ((i * 53.1 + t * .6) % (H * 1.1)) - H * .05; sx.moveTo(x, y); sx.lineTo(x - 3 * d, y + 12 * d); } sx.stroke(); }
+    lightTick(sf > 0 && sf < 1);
   }
+  /* sunlight: when the sky is clear a warm light falls across the panel from the sun's side */
+  let sunAt = null, lightN = 0; const lightEl = document.querySelector('.sunlight');
+  function lightTick(up) {
+    if (++lightN % 20) return;
+    const k = up && sunAt ? (1 - wx.cloud) * (wx.rain ? .3 : 1) : 0;
+    lightEl.style.opacity = (k * .9).toFixed(2);
+    if (sunAt) { lightEl.style.setProperty('--sx', sunAt[0] + 'px'); lightEl.style.setProperty('--sy', sunAt[1] + 'px'); }
+  }
+  /* weather (Open-Meteo, free, no key). Tokyo by default. */
+  const wx = { cloud: 0, rain: false, code: 0 };
+  const WX_CODE = c => c === 0 ? 'CLEAR' : c <= 2 ? 'FAIR' : c === 3 ? 'OVERCAST' : c <= 48 ? 'FOG' : c <= 67 ? 'RAIN' : c <= 77 ? 'SNOW' : c <= 82 ? 'SHOWERS' : 'STORM';
+  async function weather() {
+    try {
+      const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=35.68&longitude=139.77&current=cloud_cover,precipitation,weather_code,temperature_2m&timezone=Asia%2FTokyo', { cache: 'no-store' });
+      const c = (await r.json()).current; wx.cloud = Math.min(1, (c.cloud_cover || 0) / 100); wx.rain = (c.precipitation || 0) > 0 || (c.weather_code >= 51 && c.weather_code <= 99); wx.code = c.weather_code;
+      $('sWx').textContent = WX_CODE(c.weather_code) + ' ' + Math.round(c.temperature_2m) + '°C';
+    } catch (e) { $('sWx').textContent = 'NO SIGNAL'; }
+  }
+  weather(); setInterval(weather, 15 * 60e3);
 
   /* ---------- earth (bottom, under the buttons) ---------- */
   const earthCv = $('earth'), ex = earthCv.getContext('2d');
@@ -323,7 +364,7 @@
     memory: '<circle cx="12" cy="12" r="2.5"/><circle cx="5" cy="6" r="1.6"/><circle cx="19" cy="6" r="1.6"/><circle cx="6" cy="19" r="1.6"/><circle cx="18" cy="18" r="1.6"/><path d="M6.3 7.2l4 3.3M17.7 7.2l-3.9 3.3M7.2 17.8l3.2-3.8M16.8 16.8l-3-2.9"/>',
     forest: '<path d="M12 3l-6 9h4l-6 8h16l-6-8h4z"/>'
   };
-  const LABELS = [['talk', '無名'], ['market', '相場'], ['keiba', '競馬'], ['tasks', 'やること'], ['memory', '記憶庫'], ['forest', 'エルフの森']];
+  const LABELS = [['talk', 'MUMEI'], ['market', 'MARKET'], ['keiba', 'RACING'], ['tasks', 'TASKS'], ['memory', 'MEMORY'], ['forest', 'FOREST']];
   const BTNS = [];
   let usage = load('fineri.usage', {});
   const gearPath = (() => { const n = 16, pts = []; for (let i = 0; i < n * 4; i++) { const a = i / (n * 4) * TAU, r = (i % 4 < 2) ? 50 : 45.5; pts.push((50 + r * Math.cos(a)).toFixed(2) + '% ' + (50 + r * Math.sin(a)).toFixed(2) + '%'); } return 'polygon(' + pts.join(',') + ')'; })();
@@ -373,7 +414,7 @@
       del.addEventListener('click', () => { tasks = tasks.filter(x => x !== t); save('fineri.tasks', tasks); renderTasks(); });
       li.append(cb, sp, del); ul.append(li);
     });
-    $('iTasks').textContent = 'やること ' + tasks.filter(t => !t.done).length + '件';
+    $('iTasks').textContent = tasks.filter(t => !t.done).length + ' OPEN';
   }
   $('addTask').addEventListener('submit', e => { e.preventDefault(); const v = $('newTask').value.trim(); if (!v) return; tasks.push({ id: 't' + Date.now(), text: v, done: false }); save('fineri.tasks', tasks); $('newTask').value = ''; renderTasks(); });
   renderTasks();
