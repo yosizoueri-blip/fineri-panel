@@ -83,21 +83,21 @@ button { font: inherit; }
 #links { z-index: 1; }
 .gbtn { position: absolute; z-index: 3; width: 21%; aspect-ratio: 1; transform: translate(-50%, -50%); border: 0; padding: 0; background: none; cursor: pointer; color: var(--fg);
   transition: left .9s cubic-bezier(.2,.8,.2,1), top .9s cubic-bezier(.2,.8,.2,1);
-  filter: drop-shadow(0 6px 8px rgba(0,0,0,.7)) drop-shadow(0 0 8px hsl(var(--h) 100% 60% / .35)); }
-.gbtn .gear { position: absolute; inset: 0; background: conic-gradient(from 210deg, hsl(var(--h) 20% 55%), hsl(var(--h) 15% 18%), hsl(var(--h) 25% 60%), hsl(var(--h) 15% 14%), hsl(var(--h) 20% 55%));
+  filter: drop-shadow(0 0 6px hsl(var(--h) 100% 60% / .3)); }
+.gbtn .gear { position: absolute; inset: 0; background: conic-gradient(from 210deg, hsl(var(--h) 20% 70% / .35), hsl(var(--h) 15% 30% / .12), hsl(var(--h) 25% 75% / .35), hsl(var(--h) 15% 30% / .1), hsl(var(--h) 20% 70% / .35));
   animation: turn 40s linear infinite; }
 .gbtn:nth-child(even) .gear { animation-direction: reverse; }
 @keyframes turn { to { transform: rotate(360deg) } }
 .gbtn .rim { position: absolute; inset: 9%; clip-path: polygon(29.3% 0, 70.7% 0, 100% 29.3%, 100% 70.7%, 70.7% 100%, 29.3% 100%, 0 70.7%, 0 29.3%);
-  background: linear-gradient(145deg, hsl(var(--h) 60% 80%), hsl(var(--h) 50% 35%) 30%, hsl(var(--h) 60% 10%) 70%, hsl(var(--h) 50% 30%)); }
+  background: linear-gradient(145deg, hsl(var(--h) 60% 85% / .5), hsl(var(--h) 50% 45% / .15) 30%, hsl(var(--h) 60% 20% / .08) 70%, hsl(var(--h) 50% 50% / .3)); }
 .gbtn .face { position: absolute; inset: 14%; clip-path: polygon(29.3% 0, 70.7% 0, 100% 29.3%, 100% 70.7%, 70.7% 100%, 29.3% 100%, 0 70.7%, 0 29.3%);
-  background: radial-gradient(120% 90% at 30% 20%, hsl(var(--h) 60% 26%), hsl(var(--h) 70% 6%) 70%);
+  background: radial-gradient(120% 90% at 30% 20%, hsl(var(--h) 60% 40% / .14), hsl(var(--h) 70% 6% / .1) 70%); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
   display: grid; place-content: center; justify-items: center; gap: 1px;
   box-shadow: inset 0 0 0 1px hsl(var(--h) 100% 70% / .5); }
-.gbtn .face::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255,255,255,.18), transparent 45%); pointer-events: none; }
+.gbtn .face::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255,255,255,.1), transparent 45%); pointer-events: none; }
 .gbtn .face::after { content: ""; position: absolute; left: 30%; right: 30%; top: 6%; height: 2px; background: var(--c); box-shadow: 0 0 8px var(--c); }
 .gbtn svg { width: clamp(16px, 5.4vw, 26px); height: auto; stroke: var(--c2); fill: none; stroke-width: 1.7; filter: drop-shadow(0 0 4px var(--c)); }
-.gbtn span { font-size: clamp(9px, 2.7vw, 12px); font-weight: 700; letter-spacing: .02em; }
+.gbtn span { font-size: clamp(9px, 2.7vw, 12px); font-weight: 700; letter-spacing: .02em; text-shadow: 0 0 6px #000, 0 0 2px #000; }
 .gbtn:hover .gear, .gbtn:focus-visible .gear { animation-duration: 6s; }
 .gbtn:active { transform: translate(-50%, -50%) scale(.95); }
 .gbtn:focus-visible { outline: 2px solid var(--c); outline-offset: 2px; }
@@ -123,7 +123,7 @@ button { font: inherit; }
   background: radial-gradient(circle at 50% 0, #fff, var(--c) 40%, transparent 72%); filter: blur(.5px); }
 .dock button { display: grid; justify-items: center; gap: 3px; color: var(--mut); font-family: var(--font-tech); font-weight: 600; letter-spacing: .14em; font-size: 10px; background: none; border: 0; padding: 0; cursor: pointer; }
 .dock i { width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid var(--edge);
-  background: linear-gradient(150deg, hsl(var(--h) 40% 18%), hsl(var(--h) 60% 5%)); box-shadow: inset 0 1px 0 hsl(var(--h) 100% 80% / .3), 0 4px 10px rgba(0,0,0,.6);
+  background: linear-gradient(150deg, hsl(var(--h) 40% 40% / .14), hsl(var(--h) 60% 10% / .08)); box-shadow: inset 0 1px 0 hsl(var(--h) 100% 80% / .3);
   clip-path: polygon(29.3% 0, 70.7% 0, 100% 29.3%, 100% 70.7%, 70.7% 100%, 29.3% 100%, 0 70.7%, 0 29.3%); }
 .dock svg { width: 20px; height: 20px; stroke: var(--c2); fill: none; stroke-width: 1.6; }
 .dock button:hover i { background: linear-gradient(150deg, hsl(var(--h) 60% 28%), hsl(var(--h) 60% 8%)); }

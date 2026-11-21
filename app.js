@@ -1,8 +1,9 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '3.1';
+  const VERSION = '3.2';
   const CHANGELOG = [
+    { v: '3.2', d: '2026-11-21', items: ['中央のオプティマスの点を小さく、さらに暗く', 'ボタンをほぼ透明なガラスに'] },
     { v: '3.1', d: '2026-11-21', items: ['中央のオプティマスと地球・太陽・月をさらに薄く'] },
     { v: '3.0', d: '2026-11-21', items: ['地球・太陽・月を薄くして背景になじませた（メイン画面 完成）'] },
     { v: '2.9', d: '2026-11-21', items: [
@@ -151,7 +152,7 @@
   const crim = (a, l) => 'hsla(350,82%,' + (l || 40) + '%,' + a + ')';
   // one graph, two places: the brain under the skin (crimson) and the ring around the core (base colour).
   // The same pulses run through both, so the core mirrors what moves in the head.
-  function drawGraph(g, d, P, sc, RAD, colour, t) {
+  function drawGraph(g, d, P, sc, RAD, colour, t, nodeK = 1) {
     const hubP = P[GRAPH.hub], waveLit = (x, y) => { let v = 0; waves.forEach(w => { const k = (t - w) / 2200, r = k * 1.1 * RAD, dd = Math.abs(Math.hypot(x - hubP[0], y - hubP[1]) - r); v = Math.max(v, Math.max(0, 1 - dd / (RAD * .12)) * (1 - k)); }); return v; };
     g.lineCap = 'round';
     GRAPH.e.forEach(([a, b]) => {
@@ -165,10 +166,10 @@
       const k0 = Math.max(0, p.k - .22), tx = A[0] + (B[0] - A[0]) * k0, ty = A[1] + (B[1] - A[1]) * k0;
       const gr = g.createLinearGradient(tx, ty, x, y); gr.addColorStop(0, colour(0)); gr.addColorStop(1, colour(.95, 82));
       g.strokeStyle = gr; g.lineWidth = 2.4 * d * sc; g.beginPath(); g.moveTo(tx, ty); g.lineTo(x, y); g.stroke();
-      g.fillStyle = colour(1, 92); g.shadowColor = colour(1); g.shadowBlur = 14 * d; g.beginPath(); g.arc(x, y, 2.4 * d * sc, 0, TAU); g.fill(); g.shadowBlur = 0;
+      g.fillStyle = colour(1, 92); g.shadowColor = colour(1); g.shadowBlur = 14 * d * nodeK; g.beginPath(); g.arc(x, y, 2.4 * d * sc * nodeK, 0, TAU); g.fill(); g.shadowBlur = 0;
     });
     lay.forEach((n, i) => {
-      const w = deg[i] / maxDeg, x = P[i][0], y = P[i][1], lit = waveLit(x, y), r = (1.8 + 5 * Math.sqrt(w)) * d * sc, br = .55 + .25 * Math.sin(t * .002 + n.ph) + .3 * lit;
+      const w = deg[i] / maxDeg, x = P[i][0], y = P[i][1], lit = waveLit(x, y), r = (1.8 + 5 * Math.sqrt(w)) * d * sc * nodeK, br = .55 + .25 * Math.sin(t * .002 + n.ph) + .3 * lit;
       const gr = g.createRadialGradient(x, y, 0, x, y, r * 4.5); gr.addColorStop(0, colour(.35 * br + .2 * w)); gr.addColorStop(1, colour(0));
       g.fillStyle = gr; g.beginPath(); g.arc(x, y, r * 4.5, 0, TAU); g.fill();
       g.fillStyle = colour(Math.min(1, .6 + .4 * br), 80); g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill();
@@ -195,8 +196,8 @@
     // 2) its reflection: the ring around the core, wired into the crystal (the crystal is fineri, the hub note)
     const ld = fit(linkCv), LW = linkCv.width, lc = LW / 2; lx.clearRect(0, 0, LW, LW);
     lx.save(); lx.beginPath(); lx.rect(0, 0, LW, LW); lx.arc(lc, lc, LW * .085, 0, TAU, true); lx.clip();
-    lx.globalAlpha = .22;
-    drawGraph(lx, ld, place(ring, lc, lc, LW, LW, rot * .6, t), Math.max(.7, Math.min(1.2, LW / ld / 380)), LW * .45, col, t);
+    lx.globalAlpha = .12;
+    drawGraph(lx, ld, place(ring, lc, lc, LW, LW, rot * .6, t), Math.max(.7, Math.min(1.2, LW / ld / 380)), LW * .45, col, t, .5);
     lx.globalAlpha = 1; lx.restore();
   }
 
