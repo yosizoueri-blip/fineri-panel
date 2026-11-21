@@ -79,7 +79,8 @@ button { font: inherit; }
 /* stage: circle of buttons around the crystal */
 .mid { position: relative; flex: 1 1 auto; min-height: 0; container-type: size; display: grid; place-items: center; margin-top: -10px; }
 .stage { position: relative; z-index: 1; width: min(100cqw, 100cqh); aspect-ratio: 1; }
-#core { position: absolute; inset: 0; width: 100%; height: 100%; }
+#core, #links { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+#links { z-index: 1; }
 .gbtn { position: absolute; z-index: 3; width: 21%; aspect-ratio: 1; transform: translate(-50%, -50%); border: 0; padding: 0; background: none; cursor: pointer; color: var(--fg);
   transition: left .9s cubic-bezier(.2,.8,.2,1), top .9s cubic-bezier(.2,.8,.2,1);
   filter: drop-shadow(0 6px 8px rgba(0,0,0,.7)) drop-shadow(0 0 8px hsl(var(--h) 100% 60% / .35)); }
@@ -188,7 +189,7 @@ textarea, input[type=text] { font: inherit; color: var(--fg); background: rgba(0
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 
 /* earth under the buttons */
-.earth { position: absolute; z-index: 0; pointer-events: none; left: calc(-1 * max(14px, env(safe-area-inset-left, 0px))); right: calc(-1 * max(14px, env(safe-area-inset-right, 0px)));
+.earth { position: absolute; z-index: 0; pointer-events: none; left: calc(50% - 50vw); right: calc(50% - 50vw);
   bottom: -30px; height: 42%; }
 #earth { position: absolute; inset: 0; width: 100%; height: 100%;
   -webkit-mask-image: linear-gradient(transparent, #000 18%, #000 94%, transparent); mask-image: linear-gradient(transparent, #000 18%, #000 94%, transparent); }
@@ -246,3 +247,12 @@ textarea, input[type=text] { font: inherit; color: var(--fg); background: rgba(0
 .dock { transform: perspective(700px) rotateX(26deg); transform-origin: 50% 100%; }
 .dp-race { transform: perspective(420px) rotateY(24deg) rotateX(14deg) skewY(-2deg); }
 .dp-hex { transform: perspective(420px) rotateY(-24deg) rotateX(14deg) skewY(2deg); }
+
+/* handwritten labels (numbers stay in the tech face so they read cleanly) */
+:root { --font-script: "Dancing Script", cursive; }
+.dp .row b, .dp-h, .info .row b, .info .dp-h, .gbtn .face > span, .dock button, .logo small {
+  font-family: var(--font-script); text-transform: none; letter-spacing: .02em; }
+.dp .row b, .info .row b { font-size: 1.15em; }
+.dp-h, .info .dp-h { font-size: 11px; }
+.gbtn .face > span { font-size: 1.15em; }
+.dock button { font-size: 13px; }

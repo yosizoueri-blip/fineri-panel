@@ -1,8 +1,14 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '2.7';
+  const VERSION = '2.8';
   const CHANGELOG = [
+    { v: '2.8', d: '2026-11-21', items: [
+      '地球・太陽・月をリアルに。地球は本物の海岸線と雲、太陽は地球の左うしろ、月は右手前で本物の満ち欠け',
+      '太陽と月はスマホ幅の4分の1くらいの大きさで、データパネルの裏',
+      '文字を筆記体に（数字は読みやすいまま）',
+      'コアの内側にも光る輪を足して、外側と逆向きに回転',
+      '中央の宝石＝fineri。オプティマスの線が宝石につながり、光が届くと宝石が明るくなる'] },
     { v: '2.7', d: '2026-11-21', items: ['太陽を地球の左、月を右に。空に出ている方が明るく光る（月は満ち欠けつき、満月は赤）', '天気で太陽と月がぼやける'] },
     { v: '2.6', d: '2026-11-21', items: [
       '頭の中のオプティマスを紅色に。肌の下で動いて見えるように',
@@ -132,8 +138,8 @@
     lay[GRAPH.hub] = ring[GRAPH.hub] = { x: 0, y: 0, ph: 0, sp: 0 };
     dust = []; for (let i = 0; i < 40; i++) dust.push({ x: rnd(), y: rnd(), ph: rnd() * TAU });
   }
-  let ring = [];
-  const brainCv = $('brain'), bx = brainCv.getContext('2d'), stageEl = $('stage');
+  let ring = [], gemFlash = 0;
+  const brainCv = $('brain'), bx = brainCv.getContext('2d'), linkCv = $('links'), lx = linkCv.getContext('2d');
   const crim = (a, l) => 'hsla(350,82%,' + (l || 40) + '%,' + a + ')';
   // one graph, two places: the brain under the skin (crimson) and the ring around the core (base colour).
   // The same pulses run through both, so the core mirrors what moves in the head.
@@ -173,30 +179,20 @@
     if (!reduce && t > nextWave) { waves.push(t); nextWave = t + 4200; }
     waves = waves.filter(w => t - w < 2200);
     if (!reduce && GRAPH.e.length) for (let k = 0; k < 2; k++) if (Math.random() < .2 && pulses.length < 26) { const e = GRAPH.e[(Math.random() * GRAPH.e.length) | 0]; pulses.push({ a: e[Math.random() < .5 ? 0 : 1], e, k: 0, v: .008 + Math.random() * .008 }); }
-    for (let i = pulses.length - 1; i >= 0; i--) { pulses[i].k += pulses[i].v; if (pulses[i].k >= 1) pulses.splice(i, 1); }
+    for (let i = pulses.length - 1; i >= 0; i--) { const p = pulses[i]; p.k += p.v; if (p.k >= 1) { if ((p.e[0] === p.a ? p.e[1] : p.e[0]) === GRAPH.hub) gemFlash = 1; pulses.splice(i, 1); } }
     const rot = reduce ? 0 : t * .00004;
     // 1) the brain, under the skin of the face
     const fr = faceEl.getBoundingClientRect(), RX = fr.width * .24 * d, RY = fr.height * .12 * d;
     drawGraph(bx, d, place(lay, (fr.left + fr.width * .5) * d, (fr.top + fr.height * .245) * d, RX, RY, rot, t), Math.max(.7, Math.min(1.4, (RX + RY) / 2 / (110 * d))), (RX + RY) / 2, crim, t);
-    // 2) its reflection: the ring around the core
-    const sr = stageEl.getBoundingClientRect(), cx0 = (sr.left + sr.width / 2) * d, cy0 = (sr.top + sr.height / 2) * d, RAD = sr.width * d;
-    fx.save(); fx.beginPath(); fx.rect(0, 0, W, H); fx.arc(cx0, cy0, sr.width * .26 * d, 0, TAU, true); fx.clip();
-    drawGraph(fx, d, place(ring, cx0, cy0, RAD, RAD, rot * .6, t), Math.max(.7, Math.min(1.2, sr.width / 380)), RAD * .45, col, t);
-    fx.restore();
+    // 2) its reflection: the ring around the core, wired into the crystal (the crystal is fineri, the hub note)
+    const ld = fit(linkCv), LW = linkCv.width, lc = LW / 2; lx.clearRect(0, 0, LW, LW);
+    lx.save(); lx.beginPath(); lx.rect(0, 0, LW, LW); lx.arc(lc, lc, LW * .085, 0, TAU, true); lx.clip();
+    drawGraph(lx, ld, place(ring, lc, lc, LW, LW, rot * .6, t), Math.max(.7, Math.min(1.2, LW / ld / 380)), LW * .45, col, t);
+    lx.restore();
   }
 
   /* ---------- sky: globe, sun, moon ---------- */
   const sky = $('sky'), sx = sky.getContext('2d');
-  // land: 2° equirectangular bitmap built from Natural Earth (world-atlas land-110m), 90 rows × 180 cols, hex per row
-  const LAND = ["000000000000000000000000000000000000000000000","000000000000000000000000000000000000000000000","000000000000000000000000000000000000000000000","0000000000017fe01ffe0000000000000000000000000","00000000003ffffffffff0000000600000e0000000000","00000000277ffdffffff8001fc000000007c000000000","0000000750f7e3ffffff800060000010000fc00000000","00000001f8bfc007ffff00000000038007ffe001c8000","0000001fcdf7f003ffff000000000c043fffffe0c0000","803c000dfcb7ff03fffe000003800c1fffffffffff800","01fffffffefddf81fff800003ff800fffffffffffffff","f0ffffffffff87e1ff8000007ffefffffffffffffffff","b3ffffffffff9fc0fc03e000fbfffffffffffffffffff","09fffffffff8c3c0f8000007e7fffffffffffffffffff","01ffffffffe01e007800000fe7ffffffffffffffff3f8","007a07ffffe01f4000000007e3fffffffffffffff6300","003001fffff81fe000000183c7ffffffffffffff00f00","000000ffffffbff8000003c3bffffffffffffffc01e00","0000017fffffbffc000006efffffffffffffffffc0c00","0000003ffffffffc000001ffffffffffffffffffc0000","0000001fffffffe7000000ffffffffffffffffff40000","0000000fffffffc30000007fffffffffffffffff40000","0000000fffffffe00000007fffb7cffffffffffe40000","0000000ffffffe00000007f9bf03cffffffffff8e0000","0000000ffffffe00000007e2ffffe7ffffffffe080000","0000000ffffff800000007c22dffe7fffffffcc080000","00000007fffff0000000039f44ffe7fffffffe6380000","00000007fffff000000001ff002ffffffffffc6f00000","00000001ffffc000000007ff881ffffffffffe1800000","00000000ffffc000000007fffffffffffffffe0000000","00000000ffe0c00000000fffffffdffffffffe0000000","000000005fc0400000001fffffefeffffffffc0000000","000000002f80400000003ffffffff6fffffffe0000000","000000000780c00000003ffffff7ff0ffffff20000000","0000000007c6180000007ffffffbff07fcffc00000000","0008000003ec170000003ffffffbfe03f87e800000000","0000000000fc000000003ffffff9fc01e07f020000000","00000000001f000000007ffffffdf001c01f820000000","000000000007800000007fffffff8001c01f830000000","0000000000010fa000003fffffff7000c013018000000","000000000000fff000001fffffffe000e010018000000","0000000000001ff800000fffffffe0002008018000000","0000000000001fff000007cfffffc000002c1c0000000","0000000000001fff80000001ffffc000003c380000000","0000000000003fff80000003ffff0000001cfb2000000","0000000000007fffe0000003fffe0000000c7e1800000","0000000000003ffffc000001fffc00000006762f80000","0000000000007fffff000000fffc000000020303e4000","0000000000003fffff800000fffc00000001e001f0000","0000000000003fffff000000fffc000000000680d8200","0000000000001fffff0000007ffc00000000000000000","0000000000001ffffe000000fffe20000000001c40000","0000000000000ffffe000000fffc6000000000fc60000","00000000000003fffe000000fffce000000001ffe0001","00000000000001fffc000000fff0e000000003fff0000","00000000000001fffc0000007ff0c00000000ffff8080","00000000000001fff80000007ff0c00000001ffffc000","00000000000001ffc00000007fe0c00000001ffffc000","00000000000003ffc00000007fe0000000001ffffe000","00000000000003ffc00000003fc0000000001ffffe000","00000000000003ff800000001f80000000001ffffe000","00000000000003ff000000001f00000000000f87fc000","00000000000003fe000000000000000000000c03fc000","00000000000007fc000000000000000000000000f8004","00000000000007f000000000000000000000000040006","00000000000007e00000000000000000000000003000c","00000000000007c000000000000000000000000010018","000000000000078000000000000000000000000000030","0000000000000f8000000000000000000000000000020","0000000000000f8000000000000000080000000000000","0000000000000f0000000000000000000000000000000","000000000000070000000000000000000000000000000","000000000000038000000000000000000000000000000","000000000000000000000000000000000000000000000","000000000000000000000000000000000000000000000","000000000000000000000000000000000000000000000","000000000000000000000000000000000000000000000","000000000000002000000000000000000000000000000","00000000000000c00000000000003f001fffffffe0000","00000000000002c000000000003bfff87fffffffff800","00000000000007e0000003fffffffff3fffffffffffe0","0000000003fe07f000003ffffffffffffffffffffffe0","00005fffffffffc000007ffffffffffffffffffffff80","001ffffffffffe00001ffffffffffffffffffffffff00","00cffffffffff00070fffffffffffffffffffffffff80","0007fffffffffff1f3ffffffffffffffffffffffffe00","0007fffffffffffffffffffffffffffffffffffffffc0","fffffffffffffffffffffffffffffffffffffffffffff","fffffffffffffffffffffffffffffffffffffffffffff","fffffffffffffffffffffffffffffffffffffffffffff"];
-  const land = []; LAND.forEach((h, row) => { const bits = h.split('').map(c => parseInt(c, 16).toString(2).padStart(4, '0')).join('');
-    for (let col_ = 0; col_ < 180; col_++) if (bits[col_] === '1') land.push([(89 - row * 2) * Math.PI / 180, (col_ * 2 - 179) * Math.PI / 180]); });
-  // mountain ranges (lon, lat): drawn as brighter ridges
-  const RANGES = [[[73,35],[78,33],[82,30],[86,28],[90,28],[95,28]], [[70,38],[75,36],[80,36]], [[-75,10],[-77,0],[-77,-10],[-70,-18],[-69,-25],[-70,-33],[-71,-40],[-73,-50]],
-    [[-150,62],[-135,59],[-122,52],[-115,47],[-110,42],[-107,37],[-105,32]], [[6,45],[10,46.5],[14,47]], [[60,68],[59,60],[58,55],[58,51]], [[-8,31],[0,34],[8,36]],
-    [[40,43.5],[47,41.5]], [[145,-15],[147,-25],[150,-32],[148,-37]], [[37,13],[38,5],[36,-3],[35,-10]], [[45,36],[50,32],[56,27]], [[100,35],[104,30],[100,25]]];
-  const ridge = []; RANGES.forEach(r => { for (let i = 0; i < r.length - 1; i++) for (let k = 0; k < 8; k++) { const f = k / 8;
-    ridge.push([(r[i][1] + (r[i + 1][1] - r[i][1]) * f) * Math.PI / 180, (r[i][0] + (r[i + 1][0] - r[i][0]) * f) * Math.PI / 180]); } });
   function moonAge(date) { const syn = 29.530588853, ref = Date.UTC(2000, 0, 6, 18, 14); return (((date - ref) / 864e5) % syn + syn) % syn; }
   function sunTimes(n) { // Tokyo, hours JST
     const start = Date.UTC(n.getUTCFullYear(), 0, 0), N = Math.floor((n - start) / 864e5);
@@ -239,68 +235,77 @@
 
   /* ---------- earth (bottom, under the buttons) ---------- */
   const earthCv = $('earth'), ex = earthCv.getContext('2d');
-  // sun on the left of the earth, moon on the right: whichever is in the sky now shines brighter
-  function drawLights(t, W, H, d) {
+  // realistic earth, sun and moon. Textures are made from Natural Earth coastlines (earth) and a procedural near-side map (moon).
+  const tex = {}; function loadTex(name, src) { const im = new Image(); im.onload = () => { const c = document.createElement('canvas'); c.width = im.width; c.height = im.height;
+    const g = c.getContext('2d'); g.drawImage(im, 0, 0); tex[name] = g.getImageData(0, 0, im.width, im.height); earthCache.at = -1e9; moonCache.at = -1e9; }; im.src = src; }
+  loadTex('earth', 'earth-tex.jpg'); loadTex('clouds', 'earth-clouds.webp'); loadTex('moon', 'moon-tex.webp');
+  const earthCache = { at: 0, cv: document.createElement('canvas'), key: '' }, moonCache = { at: 0, cv: document.createElement('canvas'), key: '' };
+  const LIGHT = (() => { const v = [-.78, .3, .55], m = Math.hypot(...v); return v.map(x => x / m); })(); // the sun sits to the upper left
+  function renderEarth(R, top, H) {
+    const E = tex.earth, C = tex.clouds; if (!E) return;
+    const size = Math.ceil(R * 2), rows = Math.min(size, Math.ceil(H - top) + 2), cv = earthCache.cv; cv.width = size; cv.height = rows;
+    const g = cv.getContext('2d'), img = g.createImageData(size, rows), o = img.data;
+    const rot = (Date.now() / 3600e3 % 1) * TAU, drift = (Date.now() / 5400e3 % 1) * TAU, tilt = .12, ct = Math.cos(tilt), st = Math.sin(tilt);
+    for (let py = 0; py < rows; py++) { const Y = 1 - (py + .5) / R;
+      for (let px = 0; px < size; px++) { const X = (px + .5) / R - 1, r2 = X * X + Y * Y; if (r2 > 1) continue;
+        const Z = Math.sqrt(1 - r2), y = Y * ct + Z * st, z = -Y * st + Z * ct, lat = Math.asin(Math.max(-1, Math.min(1, y)));
+        let lon = Math.atan2(X, z) - rot; lon = ((lon + Math.PI) % TAU + TAU) % TAU;
+        const tx = (lon / TAU * E.width) | 0, ty = Math.min(E.height - 1, ((Math.PI / 2 - lat) / Math.PI * E.height) | 0), i4 = (ty * E.width + tx) * 4;
+        let r = E.data[i4], gg = E.data[i4 + 1], b = E.data[i4 + 2];
+        const cxp = ((((lon + drift) % TAU) / TAU * C.width) | 0) % C.width, cy = Math.min(C.height - 1, ((Math.PI / 2 - lat) / Math.PI * C.height) | 0), ca = C.data[(cy * C.width + cxp) * 4] / 255 * .6;
+        const diff = Math.max(0, X * LIGHT[0] + Y * LIGHT[1] + Z * LIGHT[2]), lit = .05 + 1.05 * Math.pow(diff, .85);
+        // ocean glint
+        const ocean = b > r + 25 ? 1 : 0, hx = LIGHT[0], hy = LIGHT[1], hz = LIGHT[2] + 1, hm = Math.hypot(hx, hy, hz), spec = ocean * Math.pow(Math.max(0, (X * hx + Y * hy + Z * hz) / hm), 60) * 160 * (1 - ca);
+        r = r * (1 - ca) + 235 * ca; gg = gg * (1 - ca) + 240 * ca; b = b * (1 - ca) + 245 * ca;
+        const k = (py * size + px) * 4, edge = Math.min(1, (1 - Math.sqrt(r2)) * 40);
+        o[k] = Math.min(255, r * lit + spec); o[k + 1] = Math.min(255, gg * lit + spec); o[k + 2] = Math.min(255, b * lit + spec + 8 * (1 - diff)); o[k + 3] = 255 * edge; } }
+    g.putImageData(img, 0, 0);
+  }
+  function renderMoon(D, age, full) {
+    const M = tex.moon; if (!M) return;
+    const size = Math.ceil(D), cv = moonCache.cv; cv.width = cv.height = size; const g = cv.getContext('2d'), img = g.createImageData(size, size), o = img.data;
+    const ph = age / 29.530588853 * TAU, L = [Math.sin(ph), 0, -Math.cos(ph)];
+    for (let py = 0; py < size; py++) for (let px = 0; px < size; px++) {
+      const X = (px + .5) / size * 2 - 1, Y = (py + .5) / size * 2 - 1, r2 = X * X + Y * Y; if (r2 > 1) continue;
+      const Z = Math.sqrt(1 - r2), diff = Math.max(0, X * L[0] - Y * L[1] + Z * L[2]), term = Math.min(1, diff * 6);
+      const a = M.data[(((py / size * M.height) | 0) * M.width + ((px / size * M.width) | 0)) * 4] / 255, v = a * (.035 + 1.1 * Math.pow(diff, .7) * term) * 255;
+      const k = (py * size + px) * 4; o[k] = Math.min(255, v * (full ? 1.15 : 1)); o[k + 1] = Math.min(255, v * (full ? .5 : 1)); o[k + 2] = Math.min(255, v * (full ? .5 : 1.03));
+      o[k + 3] = 255 * Math.min(1, (1 - Math.sqrt(r2)) * size * .5); }
+    g.putImageData(img, 0, 0);
+  }
+  function drawEarth(t) {
+    const d = fit(earthCv), W = earthCv.width, H = earthCv.height; ex.clearRect(0, 0, W, H);
+    const R = Math.min(W * .43, H * 1.05), gx = W / 2, gy = H * .3 + R, top = gy - R;
     const n = jst(), hr = n.getUTCHours() + n.getUTCMinutes() / 60 + n.getUTCSeconds() / 3600, cl = wx.cloud;
     const [rise, set] = sunTimes(n), sunUp = hr > rise && hr < set;
     const age = moonAge(Date.now()), transit = 12 + age * 24 / 29.530588853, mf = ((hr - (transit - 6.2)) % 24 + 24) % 24 / 12.4, moonUp = mf > 0 && mf < 1;
     const full = Math.abs(age - 14.77) < 1.0;
     $('stSky').textContent = full ? 'FULL MOON' : 'MOON ' + age.toFixed(1);
-    const y = H * .87, r = Math.max(8 * d, Math.min(W, H) * .052);
-    // sun
-    { const x = W * .08, on = sunUp ? 1 : .22, haze = r * (1 + cl * 3.2);
-      const g = ex.createRadialGradient(x, y, 0, x, y, r * 4 + haze); g.addColorStop(0, 'rgba(255,240,200,' + (.9 - cl * .45) * on + ')'); g.addColorStop(.25, 'rgba(255,200,120,' + (.35 - cl * .15) * on + ')'); g.addColorStop(1, 'rgba(255,180,80,0)');
-      ex.fillStyle = g; ex.beginPath(); ex.arc(x, y, r * 4 + haze, 0, TAU); ex.fill();
-      const a = (1 - cl * .55) * (sunUp ? 1 : .35), disc = ex.createRadialGradient(x, y, 0, x, y, r * (1 + cl * 1.6));
-      disc.addColorStop(0, 'rgba(255,246,220,' + a + ')'); disc.addColorStop(Math.max(.05, .92 - cl * .85), 'rgba(255,246,220,' + a + ')'); disc.addColorStop(1, 'rgba(255,246,220,0)');
-      ex.fillStyle = disc; ex.beginPath(); ex.arc(x, y, r * (1 + cl * 1.6), 0, TAU); ex.fill();
+    const D = Math.min(innerWidth * .25 * d, R * .62), ang = Math.PI * .84;
+    const sun = [gx + Math.cos(ang) * R * .97, gy - Math.sin(ang) * R * .97], moon = [gx - Math.cos(ang) * R * .97, gy - Math.sin(ang) * R * .97];
+    // sun (behind the earth): corona, limb-darkened disc; clouds soften it
+    { const [x, y] = sun, r = D / 2, on = sunUp ? 1 : .25, soft = 1 + cl * 2.2;
+      const co = ex.createRadialGradient(x, y, r * .6, x, y, r * 4.5 * soft); co.addColorStop(0, 'rgba(255,236,190,' + .55 * on + ')'); co.addColorStop(.25, 'rgba(255,200,120,' + .18 * on + ')'); co.addColorStop(1, 'rgba(255,170,80,0)');
+      ex.fillStyle = co; ex.beginPath(); ex.arc(x, y, r * 4.5 * soft, 0, TAU); ex.fill();
+      const a = (1 - cl * .5) * (sunUp ? 1 : .35), disc = ex.createRadialGradient(x - r * .1, y - r * .1, 0, x, y, r * (1 + cl * .8));
+      disc.addColorStop(0, 'rgba(255,255,245,' + a + ')'); disc.addColorStop(.55, 'rgba(255,240,190,' + a + ')'); disc.addColorStop(Math.max(.6, .93 - cl * .3), 'rgba(255,190,90,' + a + ')'); disc.addColorStop(1, 'rgba(255,170,60,0)');
+      ex.fillStyle = disc; ex.beginPath(); ex.arc(x, y, r * (1 + cl * .8), 0, TAU); ex.fill();
       const br = earthCv.getBoundingClientRect(); sunAt = [x / d + br.left, y / d + br.top]; lightTick(sunUp); }
-    // moon (phase, red when full)
-    { const x = W * .92, on = moonUp ? 1 : .3, glow = full ? 'rgba(255,60,70,' : 'rgba(200,225,255,';
-      const g = ex.createRadialGradient(x, y, 0, x, y, r * (full ? 5 : 3.2) * (1 + cl)); g.addColorStop(0, glow + (full ? .75 : .45) * on * (1 - cl * .5) + ')'); g.addColorStop(1, glow + '0)');
-      ex.fillStyle = g; ex.beginPath(); ex.arc(x, y, r * (full ? 5 : 3.2) * (1 + cl), 0, TAU); ex.fill();
-      ex.globalAlpha = (moonUp ? 1 : .4) * (1 - cl * .4);
-      const ph = age / 29.530588853, k = Math.cos(ph * TAU), waxing = ph < .5, mr = r * .85;
-      const lit = full ? '#ff5a62' : '#e8f0ff', dark = 'rgba(8,16,30,.96)';
-      ex.fillStyle = lit; ex.beginPath(); ex.arc(x, y, mr, 0, TAU); ex.fill();
-      ex.fillStyle = dark; ex.beginPath(); ex.arc(x, y, mr, Math.PI / 2, -Math.PI / 2, !waxing); ex.fill();
-      ex.fillStyle = k > 0 ? dark : lit; ex.beginPath(); ex.ellipse(x, y, Math.abs(k) * mr + .01, mr, 0, 0, TAU); ex.fill();
-      ex.globalAlpha = 1; }
-  }
-  function drawEarth(t) {
-    const d = fit(earthCv), W = earthCv.width, H = earthCv.height; ex.clearRect(0, 0, W, H);
-    const R = Math.min(W * .43, H * 1.05), gx = W / 2, gy = H * .3 + R; // dome rising from below
-    // orbit rings around the planet
-    ex.lineWidth = 1 * d;
-    [[1.5, .2, .22], [1.28, .16, .3], [1.75, .26, .14]].forEach(([k, f, a], i) => {
-      ex.strokeStyle = col(a); if (i === 2) ex.setLineDash([3 * d, 6 * d]);
-      ex.beginPath(); ex.ellipse(gx, gy - R * .62, R * k, R * k * f, 0, 0, TAU); ex.stroke(); ex.setLineDash([]); });
-    const sweep = reduce ? 0 : (t * .0006) % TAU;
-    ex.fillStyle = col(.9, 85); ex.beginPath(); ex.arc(gx + Math.cos(sweep) * R * 1.5, gy - R * .62 + Math.sin(sweep) * R * 1.5 * .2, 2 * d, 0, TAU); ex.fill();
-    ex.save();
-    const halo = ex.createRadialGradient(gx, gy, R * .9, gx, gy, R * 1.12); halo.addColorStop(0, col(0)); halo.addColorStop(.5, col(.35)); halo.addColorStop(1, col(0));
-    ex.fillStyle = halo; ex.beginPath(); ex.arc(gx, gy, R * 1.12, 0, TAU); ex.fill();
-    const body = ex.createRadialGradient(gx, gy - R * .6, 0, gx, gy, R); body.addColorStop(0, col(.22, 30)); body.addColorStop(1, 'rgba(0,4,10,.95)');
-    ex.fillStyle = body; ex.beginPath(); ex.arc(gx, gy, R, 0, TAU); ex.fill();
-    ex.beginPath(); ex.arc(gx, gy, R, 0, TAU); ex.clip();
-    const rot = (Date.now() / 3600e3 % 1) * TAU, tilt = .42; // one turn per hour
-    const proj = (lat, lon) => { const x = Math.cos(lat) * Math.sin(lon + rot), y = Math.sin(lat), z = Math.cos(lat) * Math.cos(lon + rot);
-      const y2 = y * Math.cos(tilt) - z * Math.sin(tilt), z2 = y * Math.sin(tilt) + z * Math.cos(tilt); return [gx + x * R, gy - y2 * R, z2]; };
-    ex.lineWidth = 1 * d;
-    for (let lo = 0; lo < 12; lo++) { ex.strokeStyle = col(.18); ex.beginPath(); let pen = false;
-      for (let la = -1.5; la <= 1.5; la += .06) { const p = proj(la, lo * Math.PI / 6); if (p[2] < 0) { pen = false; continue; } pen ? ex.lineTo(p[0], p[1]) : ex.moveTo(p[0], p[1]); pen = true; } ex.stroke(); }
-    for (let la = -60; la <= 60; la += 20) { ex.strokeStyle = col(.15); ex.beginPath(); let pen = false;
-      for (let lo = 0; lo <= TAU + .05; lo += .05) { const p = proj(la * Math.PI / 180, lo); if (p[2] < 0) { pen = false; continue; } pen ? ex.lineTo(p[0], p[1]) : ex.moveTo(p[0], p[1]); pen = true; } ex.stroke(); }
-    const dot = Math.max(1.2 * d, R / 70);
-    land.forEach(([la, lo]) => { const p = proj(la, lo); if (p[2] < .02) return; ex.fillStyle = col(.18 + .5 * p[2], 62); ex.fillRect(p[0] - dot / 2, p[1] - dot / 2, dot, dot); });
-    ex.shadowColor = col(1); ex.shadowBlur = 6 * d;
-    ridge.forEach(([la, lo]) => { const p = proj(la, lo); if (p[2] < .02) return; ex.fillStyle = col(.4 + .6 * p[2], 88); ex.beginPath(); ex.arc(p[0], p[1], dot * .75, 0, TAU); ex.fill(); });
-    ex.shadowBlur = 0;
-    ex.restore();
-    ex.strokeStyle = col(.8); ex.lineWidth = 1.5 * d; ex.shadowColor = col(1); ex.shadowBlur = 14 * d;
-    ex.beginPath(); ex.arc(gx, gy, R, Math.PI * 1.1, Math.PI * 1.9); ex.stroke(); ex.shadowBlur = 0;
-    drawLights(t, W, H, d);
-  
+    // earth
+    if (tex.earth && tex.clouds) {
+      const key = Math.round(R) + 'x' + Math.round(H - top);
+      if (performance.now() - earthCache.at > 1500 || earthCache.key !== key) { renderEarth(R, top, H); earthCache.at = performance.now(); earthCache.key = key; }
+      ex.drawImage(earthCache.cv, gx - R, top);
+    }
+    const atm = ex.createRadialGradient(gx, gy, R * .97, gx, gy, R * 1.08); atm.addColorStop(0, 'rgba(120,180,255,.5)'); atm.addColorStop(1, 'rgba(120,180,255,0)');
+    ex.fillStyle = atm; ex.beginPath(); ex.arc(gx, gy, R * 1.08, 0, TAU); ex.fill();
+    // moon (in front of the earth): real phase; red at full moon
+    { const [x, y] = moon, on = moonUp ? 1 : .45, key = Math.round(D) + ':' + age.toFixed(2);
+      if (performance.now() - moonCache.at > 60e3 || moonCache.key !== key) { renderMoon(D, age, full); moonCache.at = performance.now(); moonCache.key = key; }
+      const glow = full ? 'rgba(255,70,80,' : 'rgba(210,225,255,', gr = ex.createRadialGradient(x, y, D * .45, x, y, D * (1.4 + cl));
+      gr.addColorStop(0, glow + (moonUp ? (full ? .55 : .3) : .08) * (1 - cl * .5) + ')'); gr.addColorStop(1, glow + '0)');
+      ex.fillStyle = gr; ex.beginPath(); ex.arc(x, y, D * (1.4 + cl), 0, TAU); ex.fill();
+      ex.globalAlpha = on * (1 - cl * .35); ex.drawImage(moonCache.cv, x - D / 2, y - D / 2, D, D); ex.globalAlpha = 1; }
   }
 
   /* ---------- core: rings + crystal ---------- */
@@ -371,6 +376,11 @@
       cx.lineCap = 'butt'; cx.shadowColor = col(1); cx.shadowBlur = 18 * u;
       cx.lineWidth = 12 * u; cx.strokeStyle = col(.95); cx.beginPath(); cx.arc(c, cy, 118 * u, s + .07, s + TAU / 8 - .07); cx.stroke();
       cx.shadowBlur = 0; cx.lineWidth = 3 * u; cx.strokeStyle = 'rgba(255,255,255,.55)'; cx.beginPath(); cx.arc(c, cy, 122 * u, s + .09, s + TAU / 8 - .09); cx.stroke(); }
+    // inner glowing segments, turning the other way
+    for (let k = 0; k < 6; k++) { const s = k * TAU / 6 - segRot * 1.3;
+      cx.lineCap = 'butt'; cx.shadowColor = col(1); cx.shadowBlur = 14 * u;
+      cx.lineWidth = 7 * u; cx.strokeStyle = col(.85); cx.beginPath(); cx.arc(c, cy, 92 * u, s + .1, s + TAU / 6 - .1); cx.stroke();
+      cx.shadowBlur = 0; cx.lineWidth = 2 * u; cx.strokeStyle = 'rgba(255,255,255,.5)'; cx.beginPath(); cx.arc(c, cy, 89 * u, s + .12, s + TAU / 6 - .12); cx.stroke(); }
     // counter ring
     cx.setLineDash([4 * u, 6 * u]); cx.strokeStyle = col(.5); cx.lineWidth = 1.2 * u; cx.beginPath(); cx.arc(c, cy, 100 * u, -t * .00012, -t * .00012 + TAU); cx.stroke(); cx.setLineDash([]);
     // inner metal bezel (3D)
@@ -385,7 +395,7 @@
     const mode = crystalMode();
     const hueOf = m => m === 'up' ? 145 : m === 'down' ? 352 : null;
     const glowCol = (a, m) => { const h = hueOf(m); return h === null ? col(a) : 'hsla(' + h + ',100%,60%,' + a + ')'; };
-    const pulse = mode ? (.75 + .25 * Math.sin(t * .006)) : (.85 + .15 * Math.sin(t * .002));
+    gemFlash *= .94; const pulse = (mode ? (.75 + .25 * Math.sin(t * .006)) : (.85 + .15 * Math.sin(t * .002))) * (1 + gemFlash * .7);
     const halo = (m) => { const g = cx.createRadialGradient(c, cy, 0, c, cy, 86 * u); g.addColorStop(0, glowCol(.55 * pulse, m)); g.addColorStop(.6, glowCol(.15, m)); g.addColorStop(1, glowCol(0, m)); return g; };
     if (mode === 'split') {
       cx.save(); cx.beginPath(); cx.rect(0, 0, c, W); cx.clip(); cx.fillStyle = halo('up'); cx.beginPath(); cx.arc(c, cy, 86 * u, 0, TAU); cx.fill(); cx.restore();
