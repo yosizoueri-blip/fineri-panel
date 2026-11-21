@@ -1,8 +1,9 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '3.9';
+  const VERSION = '3.10';
   const CHANGELOG = [
+    { v: '3.10', d: '2026-11-21', items: ['下のバーで開くときのノイズを短く（約0.56秒→0.28秒）'] },
     { v: '3.9', d: '2026-11-21', items: [
       '戻るときも同じ動き: 丸ボタンから開いたページは、ボタンが画面から戻ってきて元の場所にバタンとはまる',
       '下のバーから開いたページは、昔のテレビみたいにプツンと切れて戻る',
@@ -600,15 +601,15 @@
     const g = glCv.getContext('2d'), img = g.createImageData(w, h), hue = getComputedStyle(document.documentElement).getPropertyValue('--h');
     document.body.classList.add('glitching'); const t0 = performance.now(); let fired = false;
     (function step() {
-      const e = performance.now() - t0, k = e < 260 ? e / 260 : 1 - (e - 260) / 300;
+      const e = performance.now() - t0, k = e < 120 ? e / 120 : 1 - (e - 120) / 160;
       for (let i = 0; i < img.data.length; i += 4) { const v = Math.random() * 255 * (Math.random() < .5 ? 1 : .35); img.data[i] = v * .55; img.data[i + 1] = v * .85; img.data[i + 2] = v; img.data[i + 3] = 255 * Math.max(0, k) * .55; }
       g.putImageData(img, 0, 0);
       for (let i = 0; i < 6; i++) { const y = Math.random() * h, bh = 1 + Math.random() * 4;
         g.fillStyle = ['hsla(' + hue + ',100%,60%,.8)', 'rgba(255,40,80,.6)', 'rgba(255,255,255,.7)', 'rgba(0,0,0,.8)'][i % 4];
         g.fillRect(Math.random() * w * .4 - w * .2, y, w * (.5 + Math.random()), bh); }
       document.body.style.setProperty('--gx', ((Math.random() - .5) * 14 * Math.max(0, k)).toFixed(1) + 'px');
-      if (e > 240 && !fired) { fired = true; done(); }
-      if (e < 560) requestAnimationFrame(step);
+      if (e > 110 && !fired) { fired = true; done(); }
+      if (e < 280) requestAnimationFrame(step);
       else { g.clearRect(0, 0, w, h); document.body.classList.remove('glitching'); document.body.style.removeProperty('--gx'); glitching = false; }
     })();
   }
