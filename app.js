@@ -1,8 +1,9 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '2.6';
+  const VERSION = '2.7';
   const CHANGELOG = [
+    { v: '2.7', d: '2026-11-21', items: ['太陽を地球の左、月を右に。空に出ている方が明るく光る（月は満ち欠けつき、満月は赤）', '天気で太陽と月がぼやける'] },
     { v: '2.6', d: '2026-11-21', items: [
       '頭の中のオプティマスを紅色に。肌の下で動いて見えるように',
       '中央コアのまわりのオプティマスを復活。頭の中と同じ光が走る（奥の脳が手前に映る）',
@@ -206,38 +207,7 @@
   function drawSky(t) {
     const d = fit(sky), W = sky.width, H = sky.height; sx.clearRect(0, 0, W, H);
     const n = jst(), hr = n.getUTCHours() + n.getUTCMinutes() / 60 + n.getUTCSeconds() / 3600;
-    const arcY = f => H * .92 - Math.sin(Math.PI * f) * H * .78;
-    const arcX = f => W * (.06 + .88 * f);
-    // sun
     const [rise, set] = sunTimes(n); const sf = (hr - rise) / (set - rise);
-    if (sf > 0 && sf < 1) {
-      const x = arcX(sf), y = arcY(sf), r = 13 * d;
-      const cl = wx.cloud, haze = r * (1 + cl * 3.2);
-      const g = sx.createRadialGradient(x, y, 0, x, y, r * 4 + haze); g.addColorStop(0, 'rgba(255,240,200,' + (.9 - cl * .45) + ')'); g.addColorStop(.25, 'rgba(255,200,120,' + (.35 - cl * .15) + ')'); g.addColorStop(1, 'rgba(255,180,80,0)');
-      sx.fillStyle = g; sx.beginPath(); sx.arc(x, y, r * 4 + haze, 0, TAU); sx.fill();
-      // the disc itself softens and fades as the sky clouds over
-      const disc = sx.createRadialGradient(x, y, 0, x, y, r * (1 + cl * 1.6)); disc.addColorStop(0, 'rgba(255,246,220,' + (1 - cl * .55) + ')');
-      disc.addColorStop(Math.max(.05, .92 - cl * .85), 'rgba(255,246,220,' + (1 - cl * .55) + ')'); disc.addColorStop(1, 'rgba(255,246,220,0)');
-      sx.fillStyle = disc; sx.beginPath(); sx.arc(x, y, r * (1 + cl * 1.6), 0, TAU); sx.fill();
-      sunAt = [x / d + sky.getBoundingClientRect().left, y / d + sky.getBoundingClientRect().top];
-    }
-    // moon
-    const age = moonAge(Date.now()), transit = 12 + age * 24 / 29.530588853;
-    let mf = ((hr - (transit - 6.2)) % 24 + 24) % 24 / 12.4;
-    const full = Math.abs(age - 14.77) < 1.0;
-    $('stSky').textContent = full ? 'FULL MOON' : 'MOON ' + age.toFixed(1);
-    if (mf > 0 && mf < 1) {
-      const x = arcX(mf), y = arcY(mf), r = 11 * d;
-      const glow = full ? 'rgba(255,60,70,' : 'rgba(200,225,255,';
-      const g = sx.createRadialGradient(x, y, 0, x, y, r * (full ? 5 : 3.2)); g.addColorStop(0, glow + (full ? '.75)' : '.45)')); g.addColorStop(1, glow + '0)');
-      sx.fillStyle = g; sx.beginPath(); sx.arc(x, y, r * (full ? 5 : 3.2), 0, TAU); sx.fill();
-      // phase: lit disc, then shade the dark side
-      const ph = age / 29.530588853, k = Math.cos(ph * TAU), waxing = ph < .5;
-      const lit = full ? '#ff5a62' : '#e8f0ff', dark = 'rgba(8,16,30,.96)';
-      sx.fillStyle = lit; sx.beginPath(); sx.arc(x, y, r, 0, TAU); sx.fill();
-      sx.fillStyle = dark; sx.beginPath(); sx.arc(x, y, r, Math.PI / 2, -Math.PI / 2, !waxing); sx.fill();
-      sx.fillStyle = k > 0 ? dark : lit; sx.beginPath(); sx.ellipse(x, y, Math.abs(k) * r + .01, r, 0, 0, TAU); sx.fill();
-    }
     // weather: drifting cloud veils and a few rain streaks, only as strong as the sky really is
     if (wx.cloud > .3) for (let i = 0; i < 5; i++) {
       const cx = ((i * .27 + t * .000008 * (1 + i * .3)) % 1.3 - .15) * W, cy = H * (.18 + (i % 3) * .14), rw = W * (.22 + (i % 2) * .1);
@@ -246,7 +216,6 @@
     }
     if (wx.rain && !reduce) { sx.strokeStyle = 'rgba(170,200,230,.22)'; sx.lineWidth = 1 * d; sx.beginPath();
       for (let i = 0; i < 26; i++) { const x = ((i * 97.3 + t * .05) % W), y = ((i * 53.1 + t * .6) % (H * 1.1)) - H * .05; sx.moveTo(x, y); sx.lineTo(x - 3 * d, y + 12 * d); } sx.stroke(); }
-    lightTick(sf > 0 && sf < 1);
   }
   /* sunlight: when the sky is clear a warm light falls across the panel from the sun's side */
   let sunAt = null, lightN = 0; const lightEl = document.querySelector('.sunlight');
@@ -270,6 +239,34 @@
 
   /* ---------- earth (bottom, under the buttons) ---------- */
   const earthCv = $('earth'), ex = earthCv.getContext('2d');
+  // sun on the left of the earth, moon on the right: whichever is in the sky now shines brighter
+  function drawLights(t, W, H, d) {
+    const n = jst(), hr = n.getUTCHours() + n.getUTCMinutes() / 60 + n.getUTCSeconds() / 3600, cl = wx.cloud;
+    const [rise, set] = sunTimes(n), sunUp = hr > rise && hr < set;
+    const age = moonAge(Date.now()), transit = 12 + age * 24 / 29.530588853, mf = ((hr - (transit - 6.2)) % 24 + 24) % 24 / 12.4, moonUp = mf > 0 && mf < 1;
+    const full = Math.abs(age - 14.77) < 1.0;
+    $('stSky').textContent = full ? 'FULL MOON' : 'MOON ' + age.toFixed(1);
+    const y = H * .87, r = Math.max(8 * d, Math.min(W, H) * .052);
+    // sun
+    { const x = W * .08, on = sunUp ? 1 : .22, haze = r * (1 + cl * 3.2);
+      const g = ex.createRadialGradient(x, y, 0, x, y, r * 4 + haze); g.addColorStop(0, 'rgba(255,240,200,' + (.9 - cl * .45) * on + ')'); g.addColorStop(.25, 'rgba(255,200,120,' + (.35 - cl * .15) * on + ')'); g.addColorStop(1, 'rgba(255,180,80,0)');
+      ex.fillStyle = g; ex.beginPath(); ex.arc(x, y, r * 4 + haze, 0, TAU); ex.fill();
+      const a = (1 - cl * .55) * (sunUp ? 1 : .35), disc = ex.createRadialGradient(x, y, 0, x, y, r * (1 + cl * 1.6));
+      disc.addColorStop(0, 'rgba(255,246,220,' + a + ')'); disc.addColorStop(Math.max(.05, .92 - cl * .85), 'rgba(255,246,220,' + a + ')'); disc.addColorStop(1, 'rgba(255,246,220,0)');
+      ex.fillStyle = disc; ex.beginPath(); ex.arc(x, y, r * (1 + cl * 1.6), 0, TAU); ex.fill();
+      const br = earthCv.getBoundingClientRect(); sunAt = [x / d + br.left, y / d + br.top]; lightTick(sunUp); }
+    // moon (phase, red when full)
+    { const x = W * .92, on = moonUp ? 1 : .3, glow = full ? 'rgba(255,60,70,' : 'rgba(200,225,255,';
+      const g = ex.createRadialGradient(x, y, 0, x, y, r * (full ? 5 : 3.2) * (1 + cl)); g.addColorStop(0, glow + (full ? .75 : .45) * on * (1 - cl * .5) + ')'); g.addColorStop(1, glow + '0)');
+      ex.fillStyle = g; ex.beginPath(); ex.arc(x, y, r * (full ? 5 : 3.2) * (1 + cl), 0, TAU); ex.fill();
+      ex.globalAlpha = (moonUp ? 1 : .4) * (1 - cl * .4);
+      const ph = age / 29.530588853, k = Math.cos(ph * TAU), waxing = ph < .5, mr = r * .85;
+      const lit = full ? '#ff5a62' : '#e8f0ff', dark = 'rgba(8,16,30,.96)';
+      ex.fillStyle = lit; ex.beginPath(); ex.arc(x, y, mr, 0, TAU); ex.fill();
+      ex.fillStyle = dark; ex.beginPath(); ex.arc(x, y, mr, Math.PI / 2, -Math.PI / 2, !waxing); ex.fill();
+      ex.fillStyle = k > 0 ? dark : lit; ex.beginPath(); ex.ellipse(x, y, Math.abs(k) * mr + .01, mr, 0, 0, TAU); ex.fill();
+      ex.globalAlpha = 1; }
+  }
   function drawEarth(t) {
     const d = fit(earthCv), W = earthCv.width, H = earthCv.height; ex.clearRect(0, 0, W, H);
     const R = Math.min(W * .43, H * 1.05), gx = W / 2, gy = H * .3 + R; // dome rising from below
@@ -302,6 +299,7 @@
     ex.restore();
     ex.strokeStyle = col(.8); ex.lineWidth = 1.5 * d; ex.shadowColor = col(1); ex.shadowBlur = 14 * d;
     ex.beginPath(); ex.arc(gx, gy, R, Math.PI * 1.1, Math.PI * 1.9); ex.stroke(); ex.shadowBlur = 0;
+    drawLights(t, W, H, d);
   
   }
 
