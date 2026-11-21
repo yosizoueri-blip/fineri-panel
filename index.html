@@ -14,7 +14,7 @@
 <link rel="icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="app.css?v=3.30">
+<link rel="stylesheet" href="app.css?v=3.31">
 </head>
 <body>
 <canvas id="brain" aria-hidden="true"></canvas>
@@ -26,15 +26,28 @@
 
 <!-- PC only: two side columns; the data panels move here on big screens, plus extra decorative panels -->
 <aside class="pc-side pc-l">
+  <div class="pc-pair pc-only">
+    <div class="dp dp-l dp-x pc-half" aria-hidden="true"><div class="dp-h">BIO // VITALS</div>
+      <div class="row"><b>HEART</b><span id="xHr">-</span></div><div class="row"><b>SPO2</b><span id="xO2">-</span></div><canvas class="pc-viz v-ecg"></canvas></div>
+    <div class="dp dp-l dp-x pc-half" aria-hidden="true"><div class="dp-h">GEO // LOCK</div>
+      <div class="row"><b>LAT</b><span id="xLa">-</span></div><div class="row"><b>LON</b><span id="xLo">-</span></div>
+      <div class="row"><b>ALT</b><span id="xAl">-</span></div><div class="row"><b>HDG</b><span id="xHd">-</span></div></div>
+  </div>
   <div class="dp dp-l dp-x pc-only" aria-hidden="true"><div class="dp-h">NET // UPLINK</div>
     <div class="row"><b>LATENCY</b><span id="xLat">-</span></div><div class="row"><b>PACKETS</b><span id="xPkt">-</span></div>
-    <div class="row"><b>NODES</b><span id="xNode">-</span></div><div class="bars wide" id="xNetBars"></div></div>
+    <div class="row"><b>NODES</b><span id="xNode">-</span></div><div class="row"><b>JITTER</b><span id="xJit">-</span></div><div class="row"><b>LOSS</b><span id="xLoss">-</span></div><div class="bars wide" id="xNetBars"></div></div>
   <div class="dp dp-l dp-x pc-only pc-grow" aria-hidden="true"><div class="dp-h">FOREST // SCAN</div><div id="xScan"></div></div>
 </aside>
 <aside class="pc-side pc-r">
+  <div class="pc-pair pc-only">
+    <div class="dp dp-r dp-x pc-half" aria-hidden="true"><div class="dp-h">MEM // HEAP</div><div class="xheat" id="xHeat"></div>
+      <div class="row"><b>USED</b><span id="xMem">-</span></div></div>
+    <div class="dp dp-r dp-x pc-half" aria-hidden="true"><div class="dp-h">THREAT // LEVEL</div><div class="xthreat" id="xThr">LOW</div>
+      <div class="row"><b>SECTOR</b><span id="xSec">-</span></div><div class="row"><b>WARD</b><span id="xWard">-</span></div></div>
+  </div>
   <div class="dp dp-r dp-x pc-only" aria-hidden="true"><div class="dp-h">POWER // CORE</div>
     <div class="row"><b>OUTPUT</b><span id="xPow">-</span></div><div class="row"><b>TEMP</b><span id="xTmp">-</span></div>
-    <div class="row"><b>SHIELD</b><span id="xShd">-</span></div><div class="bars wide" id="xPowBars"></div></div>
+    <div class="row"><b>SHIELD</b><span id="xShd">-</span></div><div class="row"><b>VOLT</b><span id="xV">-</span></div><div class="row"><b>FREQ</b><span id="xF">-</span></div><div class="bars wide" id="xPowBars"></div></div>
   <div class="dp dp-r dp-x pc-only pc-grow" aria-hidden="true"><div class="dp-h">LOG // STREAM</div><div id="xLog" class="xlog"></div></div>
 </aside>
 <div class="app">
@@ -243,6 +256,6 @@
   </div>
 </section>
 
-<script src="app.js?v=3.30"></script>
+<script src="app.js?v=3.31"></script>
 </body>
 </html>

@@ -338,25 +338,6 @@ body.eyes-shut .backdrop .face.shut { opacity: .62; }
 body.eyes-shut .backdrop .face:not(.shut) { opacity: 0; }
 
 /* v3.22: phone held sideways — core in the middle, data on the left, clock and dock on the right */
-@media (orientation: landscape) and (max-height: 600px) {
-  .app { max-width: none; min-height: 0; gap: 6px; padding-block: 6px;
-    display: grid !important; grid-template-columns: minmax(0, 1fr) calc(100dvh - 64px) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto auto; }
-  .head { grid-column: 1 / -1; }
-  .sky { position: absolute; left: max(14px, env(safe-area-inset-left, 0px)); top: 48px; width: calc((100% - 100dvh) / 2); height: 40%; margin: 0; }
-  .sky #sky { display: none; }
-  .nu { display: none; }
-  .mid { grid-column: 2; grid-row: 2 / 5; margin-top: 0; }
-  .info { grid-column: 3; grid-row: 3; }
-  .dock { grid-column: 3; grid-row: 4; grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 6px; padding-top: 10px; }
-  .dp-mkt, .dp-race, .dp-tel { width: max-content; }
-  .dp { font-size: 10.5px; } .dp-h { font-size: 9px; } .dp .sp { width: 40px; height: 10px; } .dp .row b { min-width: 50px; }
-  .dp-mkt { left: auto; right: calc(100% + 18px); top: 44%; }
-  .dp-race { left: auto; right: calc(100% + 18px); bottom: 0; max-width: none; }
-  .dp-tel { right: auto; left: calc(100% + 18px); top: -2%; }
-  .dp-hex { display: none; }
-  .info .t { font-size: 26px; }
-}
-
 /* crystal tap target: only active while a weekly report is unseen */
 .gem-btn { position: absolute; left: 50%; top: 50%; width: 22%; aspect-ratio: 1; transform: translate(-50%, -50%); z-index: 3; border: 0; border-radius: 50%; background: none; pointer-events: none; -webkit-tap-highlight-color: transparent; }
 .gem-btn.on { pointer-events: auto; cursor: pointer; }
@@ -371,7 +352,7 @@ body.eyes-shut .backdrop .face:not(.shut) { opacity: 0; }
 
 /* ---------- PC: data panels move into two side columns that hug the centre ---------- */
 .pc-side, .pc-only { display: none; }
-@media (min-width: 1100px) and (min-height: 601px) {
+@media (min-width: 1100px) and (min-height: 601px), (orientation: landscape) and (max-height: 600px) and (min-width: 640px) {
   .pc-side { display: flex; flex-direction: column; gap: 16px; position: fixed; z-index: 2; top: 64px; bottom: 24px; pointer-events: none;
     width: min(520px, calc(50vw - 320px)); overflow: hidden; }
   .pc-l { right: calc(50% + 300px); align-items: stretch; }
@@ -403,14 +384,14 @@ body.eyes-shut .backdrop .face:not(.shut) { opacity: 0; }
   .pc-l .pc-only:not(.pc-grow) { display: none; }
 }
 /* PC: drop the core and earth lower and lift the face a little so アングロ's eyes stay clear */
-@media (min-width: 1100px) and (min-height: 601px) {
+@media (min-width: 1100px) and (min-height: 601px), (orientation: landscape) and (max-height: 600px) and (min-width: 640px) {
   .sky { height: clamp(150px, 31dvh, 340px); }
   .backdrop .face { top: calc(var(--fw) * -0.135); }
 }
 @media (min-width: 1100px) and (min-height: 601px) and (max-height: 900px) { .sky { height: 25dvh; } }
-@media (min-width: 1100px) and (min-height: 601px) { .gbtn[data-open="talk"] { margin-top: 9%; } }
+@media (min-width: 1100px) and (min-height: 601px), (orientation: landscape) and (max-height: 600px) and (min-width: 640px) { .gbtn[data-open="talk"] { margin-top: 9%; } }
 /* PC: each side is one big console, with the data panels set into it like inset screens */
-@media (min-width: 1100px) and (min-height: 601px) {
+@media (min-width: 1100px) and (min-height: 601px), (orientation: landscape) and (max-height: 600px) and (min-width: 640px) {
   .pc-side { padding: 18px 16px; box-sizing: border-box;
     border: 1px solid hsl(var(--h) 90% 60% / .35); border-radius: 4px;
     background: linear-gradient(160deg, hsl(var(--h) 60% 22% / .5), hsl(var(--h) 60% 6% / .72) 45%, hsl(var(--h) 60% 10% / .6));
@@ -427,7 +408,7 @@ body.eyes-shut .backdrop .face:not(.shut) { opacity: 0; }
   .pc-side .dp::after { display: none; }
 }
 /* PC console v2: HUD-style frames, tabs and live visuals instead of plain boxes */
-@media (min-width: 1100px) and (min-height: 601px) {
+@media (min-width: 1100px) and (min-height: 601px), (orientation: landscape) and (max-height: 600px) and (min-width: 640px) {
   .pc-side { gap: 12px; padding: 26px 18px 18px;
     background:
       repeating-linear-gradient(0deg, hsl(var(--h) 90% 60% / .035) 0 1px, transparent 1px 4px),
@@ -465,12 +446,12 @@ body.eyes-shut .backdrop .face:not(.shut) { opacity: 0; }
   .pc-side .dp-hex #hexList .row { justify-content: space-between; letter-spacing: .14em; }
   .pc-side .xlog { font-size: 12.5px; }
 }
-@media (min-width: 1100px) and (min-height: 601px) {
+@media (min-width: 1100px) and (min-height: 601px), (orientation: landscape) and (max-height: 600px) and (min-width: 640px) {
   .pc-side .xscan .row { display: grid; grid-template-columns: 130px 1fr 44px; gap: 12px; }
   .pc-side .xscan .xpct { text-align: right; }
 }
 /* PC console v3: frameless glass (iPhone-like) with a soft reflection */
-@media (min-width: 1100px) and (min-height: 601px) {
+@media (min-width: 1100px) and (min-height: 601px), (orientation: landscape) and (max-height: 600px) and (min-width: 640px) {
   .pc-side, .pc-r { border: 0; border-radius: 26px; clip-path: none; padding: 30px 18px 18px;
     background: linear-gradient(140deg, rgba(255,255,255,.13), rgba(255,255,255,.04) 35%, rgba(255,255,255,.02) 65%, rgba(255,255,255,.08));
     -webkit-backdrop-filter: blur(16px) saturate(1.5) brightness(.75); backdrop-filter: blur(16px) saturate(1.5) brightness(.75);
@@ -485,3 +466,49 @@ body.eyes-shut .backdrop .face:not(.shut) { opacity: 0; }
   .pc-side .dp::before { background: none; border-bottom: 0; }
   .pc-side .dp-h { top: 10px; left: 16px; opacity: .8; }
 }
+
+/* phone held sideways: same layout as the PC (glass consoles on both sides), scaled down */
+@media (orientation: landscape) and (max-height: 600px) and (min-width: 640px) {
+  .app { max-width: none; width: calc(100dvh * 1.08); min-height: 0; padding-block: 4px; padding-inline: 0; }
+  .sky { display: none; }
+  .mid { margin-top: 0; }
+  .gbtn[data-open="talk"] { margin-top: 0; }
+  .info { padding: 2px 8px; } .info .t { font-size: 22px; } .info .stat { font-size: 9px; }
+  .dock { padding: 6px 8px 2px; margin-top: 2px; }
+  .pc-side { top: 6px; bottom: 6px; width: calc((100vw - 100dvh * 1.08) / 2 - 16px); padding: 20px 8px 8px; gap: 6px; border-radius: 16px; }
+  .pc-l { right: auto; left: max(8px, env(safe-area-inset-left, 0px)); }
+  .pc-r { left: auto; right: max(8px, env(safe-area-inset-right, 0px)); }
+  .pc-side::before { top: 6px; left: 14px; font-size: 7px; } .pc-r::before { left: auto; right: 14px; }
+  .pc-side .dp, .pc-side .dp-l, .pc-side .dp-r { font-size: 9.5px; padding: 17px 8px 6px; border-radius: 10px; }
+  .pc-side .dp-h { font-size: 7.5px; top: 5px; left: 9px; }
+  .pc-side .dp .row { gap: 6px; line-height: 1.35; }
+  .pc-side .dp-mkt .row { grid-template-columns: 44px 1fr auto; gap: 5px; }
+  .pc-side .dp-mkt .sp { display: none; }
+  .pc-side .dp-race .row { grid-template-columns: 18px 32px 1fr; gap: 4px; }
+  .pc-side .dp-race .n { overflow: hidden; text-overflow: ellipsis; }
+  .pc-side .dp-x:not(.pc-grow), .v-orbit, .v-gauge { display: none !important; }
+  .pc-side .xscan .row { grid-template-columns: 70px 1fr 28px; gap: 5px; } .pc-side .xlog { font-size: 9px; }
+  .gbtn svg { width: 14px; } .gbtn .face span { font-size: 7.5px; letter-spacing: 0; }
+  .logo { font-size: 15px; } .logo small { font-size: 7px; }
+  .head button, .head .chip { font-size: 9px !important; padding: 4px 7px !important; }
+  .info .t { font-size: 17px; } .info .stat { font-size: 8px; } .info .dp-h { font-size: 7px; }
+  .dock { padding: 4px 6px 0; gap: 2px; } .dock i.mini { width: 30px; height: 30px; } .dock i.mini svg { width: 13px; height: 13px; } .dock button { font-size: 7.5px; gap: 1px; }
+  .pc-side .dp-sys .row { max-width: none; }
+  .v-wave { height: 30px; margin-top: 4px; }
+  .pc-side .dp-hex { grid-template-columns: 56px 1fr; column-gap: 8px; }
+  .v-radar { width: 56px; height: 56px; }
+  .pc-side .dp-hex #hexList .row { letter-spacing: .06em; }
+}
+
+/* PC: half-width dummy panels in pairs */
+.pc-pair { display: none; }
+@media (min-width: 1100px) and (min-height: 601px) {
+  .pc-pair { display: flex; gap: 12px; flex: none; }
+  .pc-pair .dp { flex: 1 1 0; min-width: 0; }
+  .pc-side .pc-half .row b { min-width: 0; }
+  .v-ecg { height: 34px; margin-top: 6px; }
+  .xheat { display: grid; grid-template-columns: repeat(12, 1fr); gap: 3px; margin: 2px 0 8px; }
+  .xheat i { aspect-ratio: 1; background: var(--c); opacity: .3; border-radius: 2px; transition: opacity .8s; }
+  .xthreat { font: 700 34px var(--font-tech); letter-spacing: .2em; color: var(--up); text-shadow: 0 0 14px var(--up); text-align: center; margin: 2px 0 6px; }
+}
+@media (min-width: 1100px) and (min-height: 601px) and (max-height: 900px) { .pc-pair { display: none; } }

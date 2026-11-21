@@ -1,8 +1,9 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '3.30';
+  const VERSION = '3.31';
   const CHANGELOG = [
+    { v: '3.31', d: '2026-11-22', items: ['PC: ダミーパネルを追加（BIO 心電図・GEO・MEM ヒートマップ・THREAT）、NETとPOWERの行も増やした', 'スマホ横向きもPCと同じ形に: 両サイドがガラスの操作盤、真ん中に宝石・時計・ボタン'] },
     { v: '3.30', d: '2026-11-22', items: ['PC: 両サイドを枠なしのガラスに。後ろがぼけて、ななめに光の反射が入る'] },
     { v: '3.29', d: '2026-11-22', items: ['PC: 両サイドの操作盤をデザインし直し。見出しタブ・四隅の枠に変更', 'すき間を埋める動く表示を追加: 波形・レーダー・メーター・軌道', '左右そろえて表示、ログは最初から流れている'] },
     { v: '3.28', d: '2026-11-22', items: ['PC: 両サイドを大きな1枚の操作盤にして、データパネルを埋め込んだ画面みたいにした'] },
@@ -796,7 +797,7 @@
   /* meaningless-but-alive telemetry */
 
   /* ---------- PC side columns: move the data panels out to the sides on big screens ---------- */
-  { const mq = matchMedia('(min-width: 1100px) and (min-height: 601px)'), L = document.querySelector('.pc-l'), Rr = document.querySelector('.pc-r');
+  { const mq = matchMedia('(min-width: 1100px) and (min-height: 601px), (orientation: landscape) and (max-height: 600px) and (min-width: 640px)'), L = document.querySelector('.pc-l'), Rr = document.querySelector('.pc-r');
     const plan = [['.dp-sys', L, 0], ['.dp-mkt', L, 1], ['.dp-race', L, 2], ['.dp-tel', Rr, 0], ['.dp-hex', Rr, 1]];
     const home = plan.map(([s]) => { const el = document.querySelector(s); return { el, parent: el.parentNode, next: el.nextSibling }; });
     const place = () => {
@@ -807,11 +808,20 @@
     // decorative values for the PC-only panels
     const rnd = (a, b) => a + Math.random() * (b - a);
     const nb = $('xNetBars'), pb = $('xPowBars'); for (let i = 0; i < 24; i++) { nb.append(document.createElement('i')); pb.append(document.createElement('i')); }
+    for (let i = 0; i < 60; i++) $('xHeat').append(document.createElement('i'));
     const sectors = ['NORTH GROVE', 'ELDER TREE', 'MOON LAKE', 'SPIRIT GATE', 'MIST VALLEY', 'CRYSTAL CAVE', 'OLD SHRINE', 'WIND RIDGE'];
     $('xScan').className = 'xscan'; $('xScan').innerHTML = sectors.map(s => '<div class="row"><b>' + s + '</b><span class="xmeter-bg"><i class="xmeter" style="width:0"></i></span><span class="xpct">0%</span></div>').join('');
     const words = ['SYNC', 'PING', 'SCAN', 'LINK', 'WARD', 'TRACE', 'BLOOM', 'ECHO'], log = $('xLog');
     const tick = () => { if (!mq.matches) return;
       $('xLat').textContent = rnd(8, 32).toFixed(1) + ' ms'; $('xPkt').textContent = Math.round(rnd(1200, 4800)) + ' /s'; $('xNode').textContent = Math.round(rnd(36, 42)) + ' / 42';
+      $('xJit').textContent = rnd(.2, 3.8).toFixed(2) + ' ms'; $('xLoss').textContent = rnd(0, .4).toFixed(2) + ' %';
+      $('xV').textContent = rnd(229, 241).toFixed(1) + ' V'; $('xF').textContent = rnd(59.9, 60.1).toFixed(2) + ' Hz';
+      $('xHr').textContent = Math.round(rnd(64, 78)) + ' BPM'; $('xO2').textContent = Math.round(rnd(96, 99)) + ' %';
+      $('xLa').textContent = (35.18 + rnd(-.002, .002)).toFixed(4) + ' N'; $('xLo').textContent = (136.97 + rnd(-.002, .002)).toFixed(4) + ' E';
+      $('xAl').textContent = Math.round(rnd(48, 53)) + ' M'; $('xHd').textContent = String(Math.round(rnd(0, 359))).padStart(3, '0') + '°';
+      $('xHeat').querySelectorAll('i').forEach(i => { if (Math.random() < .35) i.style.opacity = (.08 + Math.random() * .9).toFixed(2); });
+      $('xMem').textContent = rnd(52, 71).toFixed(1) + ' %';
+      $('xSec').textContent = 'S-' + String(Math.round(rnd(1, 12))).padStart(2, '0'); $('xWard').textContent = Math.round(rnd(94, 100)) + ' %';
       $('xPow').textContent = rnd(92, 99.9).toFixed(1) + ' %'; $('xTmp').textContent = rnd(31, 38).toFixed(1) + ' C'; $('xShd').textContent = rnd(80, 100).toFixed(0) + ' %';
       [nb, pb].forEach(b => b.querySelectorAll('i').forEach(i => i.style.height = rnd(3, 26) + 'px'));
       $('xScan').querySelectorAll('.row').forEach(r => { const v = Math.random() < .3 ? rnd(20, 100) : null; if (v === null) return; r.querySelector('.xmeter').style.width = v + '%'; r.querySelector('.xpct').textContent = Math.round(v) + '%'; });
@@ -826,6 +836,7 @@
     const V = [mk('.dp-tel', 'wave'), mk('.dp-hex', 'radar', '#hexList'), mk('.dp-sys', 'orbit')].filter(Boolean);
     { const pw = $('xPowBars'); if (pw) { const c = document.createElement('canvas'); c.className = 'pc-only pc-viz v-gauge'; pw.parentNode.insertBefore(c, pw); V.push({ c, g: c.getContext('2d'), kind: 'gauge' }); } }
     { const nb2 = $('xNetBars'); if (nb2) { const c = document.createElement('canvas'); c.className = 'pc-only pc-viz v-wave2'; nb2.parentNode.insertBefore(c, nb2); V.push({ c, g: c.getContext('2d'), kind: 'wave' }); } }
+    document.querySelectorAll('.v-ecg').forEach(c => V.push({ c, g: c.getContext('2d'), kind: 'ecg' }));
     const blips = Array.from({ length: 7 }, () => ({ a: Math.random() * TAU, r: .25 + Math.random() * .7, life: 0 }));
     const gv = [rnd(60, 95), rnd(40, 90), rnd(70, 99)];
     let lastViz = 0;
@@ -848,6 +859,10 @@
             g.lineWidth = 1; g.globalAlpha = .45; g.beginPath(); g.arc(cx0, cy0, R - 8, 0, TAU); g.stroke();
             g.globalAlpha = 1; g.font = '600 ' + Math.round(R * .45) + 'px ' + getComputedStyle(document.body).getPropertyValue('--font-tech'); g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(Math.round(gv[i]), cx0, cy0 - 1);
             g.globalAlpha = .6; g.font = '600 ' + Math.round(R * .22) + 'px sans-serif'; g.fillText(labels[i], cx0, cy0 + R * .55); });
+        } else if (v.kind === 'ecg') { g.lineWidth = 1.5; g.beginPath(); const sp = w * .9;
+          for (let x = 0; x <= w; x += 1.5) { const ph = ((x + t * .09) % sp) / sp; let y = 0;
+            if (ph > .40 && ph < .44) y = -.15; else if (ph > .47 && ph < .49) y = .25; else if (ph >= .49 && ph < .52) y = -1; else if (ph >= .52 && ph < .55) y = .4; else if (ph > .65 && ph < .73) y = -.2 * Math.sin((ph - .65) / .08 * Math.PI);
+            const yy = h / 2 + y * h * .42; x ? g.lineTo(x, yy) : g.moveTo(x, yy); } g.globalAlpha = .9; g.stroke();
         } else if (v.kind === 'orbit') { const cx0 = w / 2, cy0 = h / 2, R = Math.min(w, h) / 2 - 3; g.globalAlpha = .3; g.beginPath(); g.arc(cx0, cy0, R, 0, TAU); g.stroke(); g.beginPath(); g.ellipse(cx0, cy0, R, R * .35, -.4, 0, TAU); g.stroke(); g.beginPath(); g.ellipse(cx0, cy0, R * .35, R, .3, 0, TAU); g.stroke();
           g.globalAlpha = .9; g.beginPath(); g.arc(cx0, cy0, R * .22, 0, TAU); g.fill(); const p = t * .0009, q = t * .0013;
           g.beginPath(); g.arc(cx0 + Math.cos(p) * R * Math.cos(-.4) - Math.sin(p) * R * .35 * Math.sin(-.4), cy0 + Math.cos(p) * R * Math.sin(-.4) + Math.sin(p) * R * .35 * Math.cos(-.4), 3, 0, TAU); g.fill();
