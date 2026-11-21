@@ -184,6 +184,42 @@ textarea, input[type=text] { font: inherit; color: var(--fg); background: rgba(0
 .mrow b { letter-spacing: .1em; }
 .mrow .up { color: var(--up); } .mrow .down { color: var(--down); }
 
+/* sheet v3.7: same HUD language as the main screen (glass, glowing edges, corner ticks, English labels) */
+.veil { background: radial-gradient(ellipse at 50% 40%, rgba(0,6,14,.25), rgba(0,3,8,.6)); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+.sheet { background:
+    repeating-linear-gradient(0deg, hsl(var(--h) 80% 60% / .035) 0 1px, transparent 1px 4px),
+    linear-gradient(hsl(var(--h) 80% 60% / .05) 1px, transparent 1px) 0 0 / 28px 28px,
+    linear-gradient(90deg, hsl(var(--h) 80% 60% / .05) 1px, transparent 1px) 0 0 / 28px 28px,
+    linear-gradient(170deg, hsl(var(--h) 60% 12% / .62), hsl(var(--h) 70% 4% / .78));
+  -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2);
+  border: 0; box-shadow: inset 0 0 0 1px hsl(var(--h) 80% 60% / .28), inset 0 0 40px hsl(var(--h) 90% 50% / .12); }
+.sheet::before { content: ""; position: absolute; inset: 6px; pointer-events: none; z-index: 1;
+  --k: hsl(var(--h) 90% 65%);
+  background:
+    linear-gradient(var(--k), var(--k)) 14px 0 / 34px 2px, linear-gradient(var(--k), var(--k)) 0 14px / 2px 34px,
+    linear-gradient(var(--k), var(--k)) calc(100% - 14px) 0 / 34px 2px, linear-gradient(var(--k), var(--k)) 100% 14px / 2px 34px,
+    linear-gradient(var(--k), var(--k)) 14px 100% / 34px 2px, linear-gradient(var(--k), var(--k)) 0 calc(100% - 14px) / 2px 34px,
+    linear-gradient(var(--k), var(--k)) calc(100% - 14px) 100% / 34px 2px, linear-gradient(var(--k), var(--k)) 100% calc(100% - 14px) / 2px 34px;
+  background-repeat: no-repeat; filter: drop-shadow(0 0 4px var(--c)); opacity: .85; }
+.sheet-head { position: relative; border-bottom: 0; padding: 16px 20px 14px; }
+.sheet-head::after { content: ""; position: absolute; left: 20px; right: 20px; bottom: 0; height: 1px;
+  background: linear-gradient(90deg, var(--c) 0 40px, hsl(var(--h) 80% 60% / .35) 40px, transparent); box-shadow: 0 0 6px hsl(var(--h) 90% 60% / .5); }
+.sheet-head h2 { font-family: var(--font-tech); letter-spacing: .12em; text-shadow: 0 0 10px hsl(var(--h) 90% 60% / .5); }
+.sheet-head .en { font-size: 10px; opacity: .9; }
+.sheet-head .en::before { content: "// "; opacity: .6; }
+.card, .mrow, .tasks li { background: linear-gradient(90deg, hsl(var(--h) 80% 40% / .16), hsl(var(--h) 60% 10% / .25) 70%, transparent);
+  border: 0; border-left: 1px solid var(--edge); box-shadow: inset 0 1px 0 hsl(var(--h) 80% 60% / .14); position: relative;
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); transition: background .2s, box-shadow .2s; }
+.card::before, .mrow::before, .tasks li::before { content: ""; position: absolute; left: 0; top: 0; width: 18px; height: 1px; background: var(--c); box-shadow: 0 0 6px var(--c); }
+a.card:hover, a.card:focus-visible { background: linear-gradient(90deg, hsl(var(--h) 85% 45% / .3), hsl(var(--h) 60% 12% / .3) 70%, transparent); box-shadow: inset 0 1px 0 hsl(var(--h) 80% 60% / .3), 0 0 14px hsl(var(--h) 90% 55% / .25); }
+.card h3 { font-family: var(--font-tech); letter-spacing: .08em; }
+.sheet button:not(.chip), .sheet a.big { color: var(--fg); background: linear-gradient(180deg, hsl(var(--h) 85% 50% / .32), hsl(var(--h) 80% 30% / .22));
+  box-shadow: inset 0 0 0 1px hsl(var(--h) 90% 65% / .7), inset 0 0 14px hsl(var(--h) 90% 55% / .35), 0 0 12px hsl(var(--h) 90% 55% / .25);
+  font-family: var(--font-tech); letter-spacing: .14em; text-shadow: 0 0 8px hsl(var(--h) 90% 60% / .6); }
+.sheet button.ghost, .sheet a.big.alt { background: hsl(var(--h) 60% 12% / .35); box-shadow: inset 0 0 0 1px var(--edge); text-shadow: none; }
+.asks a, textarea, input[type=text] { background: hsl(var(--h) 60% 8% / .45); }
+.label { color: var(--c); opacity: .85; }
+
 @media (max-width: 420px) {
   .grid2 { grid-template-columns: minmax(0, 1fr); }
   .info .t { font-size: 30px; }
