@@ -1,8 +1,14 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '2.8';
+  const VERSION = '2.9';
   const CHANGELOG = [
+    { v: '2.9', d: '2026-11-21', items: [
+      '地球をNASAの衛星写真ベースに（山の陰影、雲、夜側の街の灯り）',
+      '月を本物の月面写真ベースに',
+      'コアの光る輪を縦軸で回転。外側と内側が逆向き',
+      '中央のオプティマスを控えめに',
+      '筆記体をやめて元の字体に'] },
     { v: '2.8', d: '2026-11-21', items: [
       '地球・太陽・月をリアルに。地球は本物の海岸線と雲、太陽は地球の左うしろ、月は右手前で本物の満ち欠け',
       '太陽と月はスマホ幅の4分の1くらいの大きさで、データパネルの裏',
@@ -187,8 +193,9 @@
     // 2) its reflection: the ring around the core, wired into the crystal (the crystal is fineri, the hub note)
     const ld = fit(linkCv), LW = linkCv.width, lc = LW / 2; lx.clearRect(0, 0, LW, LW);
     lx.save(); lx.beginPath(); lx.rect(0, 0, LW, LW); lx.arc(lc, lc, LW * .085, 0, TAU, true); lx.clip();
+    lx.globalAlpha = .42;
     drawGraph(lx, ld, place(ring, lc, lc, LW, LW, rot * .6, t), Math.max(.7, Math.min(1.2, LW / ld / 380)), LW * .45, col, t);
-    lx.restore();
+    lx.globalAlpha = 1; lx.restore();
   }
 
   /* ---------- sky: globe, sun, moon ---------- */
@@ -238,7 +245,7 @@
   // realistic earth, sun and moon. Textures are made from Natural Earth coastlines (earth) and a procedural near-side map (moon).
   const tex = {}; function loadTex(name, src) { const im = new Image(); im.onload = () => { const c = document.createElement('canvas'); c.width = im.width; c.height = im.height;
     const g = c.getContext('2d'); g.drawImage(im, 0, 0); tex[name] = g.getImageData(0, 0, im.width, im.height); earthCache.at = -1e9; moonCache.at = -1e9; }; im.src = src; }
-  loadTex('earth', 'earth-tex.jpg'); loadTex('clouds', 'earth-clouds.webp'); loadTex('moon', 'moon-tex.webp');
+  loadTex('earth', 'earth-tex.jpg'); loadTex('clouds', 'earth-clouds.webp'); loadTex('moon', 'moon-tex.webp'); loadTex('night', 'earth-night.webp');
   const earthCache = { at: 0, cv: document.createElement('canvas'), key: '' }, moonCache = { at: 0, cv: document.createElement('canvas'), key: '' };
   const LIGHT = (() => { const v = [-.78, .3, .55], m = Math.hypot(...v); return v.map(x => x / m); })(); // the sun sits to the upper left
   function renderEarth(R, top, H) {
@@ -252,13 +259,14 @@
         let lon = Math.atan2(X, z) - rot; lon = ((lon + Math.PI) % TAU + TAU) % TAU;
         const tx = (lon / TAU * E.width) | 0, ty = Math.min(E.height - 1, ((Math.PI / 2 - lat) / Math.PI * E.height) | 0), i4 = (ty * E.width + tx) * 4;
         let r = E.data[i4], gg = E.data[i4 + 1], b = E.data[i4 + 2];
-        const cxp = ((((lon + drift) % TAU) / TAU * C.width) | 0) % C.width, cy = Math.min(C.height - 1, ((Math.PI / 2 - lat) / Math.PI * C.height) | 0), ca = C.data[(cy * C.width + cxp) * 4] / 255 * .6;
-        const diff = Math.max(0, X * LIGHT[0] + Y * LIGHT[1] + Z * LIGHT[2]), lit = .05 + 1.05 * Math.pow(diff, .85);
+        const cxp = ((((lon + drift) % TAU) / TAU * C.width) | 0) % C.width, cy = Math.min(C.height - 1, ((Math.PI / 2 - lat) / Math.PI * C.height) | 0), ca = C.data[(cy * C.width + cxp) * 4] / 255 * .9;
+        const dl = X * LIGHT[0] + Y * LIGHT[1] + Z * LIGHT[2], diff = Math.max(0, dl), lit = .035 + 1.1 * Math.pow(diff, .8);
+        const N = tex.night, nightK = N ? Math.max(0, Math.min(1, (.08 - dl) * 8)) * N.data[(((ty / E.height * N.height) | 0) * N.width + ((tx / E.width * N.width) | 0)) * 4] / 255 : 0;
         // ocean glint
         const ocean = b > r + 25 ? 1 : 0, hx = LIGHT[0], hy = LIGHT[1], hz = LIGHT[2] + 1, hm = Math.hypot(hx, hy, hz), spec = ocean * Math.pow(Math.max(0, (X * hx + Y * hy + Z * hz) / hm), 60) * 160 * (1 - ca);
         r = r * (1 - ca) + 235 * ca; gg = gg * (1 - ca) + 240 * ca; b = b * (1 - ca) + 245 * ca;
         const k = (py * size + px) * 4, edge = Math.min(1, (1 - Math.sqrt(r2)) * 40);
-        o[k] = Math.min(255, r * lit + spec); o[k + 1] = Math.min(255, gg * lit + spec); o[k + 2] = Math.min(255, b * lit + spec + 8 * (1 - diff)); o[k + 3] = 255 * edge; } }
+        const nl = nightK * (1 - ca * .8) * 230; o[k] = Math.min(255, r * lit + spec + nl); o[k + 1] = Math.min(255, gg * lit + spec + nl * .78); o[k + 2] = Math.min(255, b * lit + spec + nl * .45 + 6 * (1 - diff)); o[k + 3] = 255 * edge; } }
     g.putImageData(img, 0, 0);
   }
   function renderMoon(D, age, full) {
@@ -370,17 +378,21 @@
     // ticks
     for (let k = 0; k < 120; k++) { const a = k * TAU / 120 - t * .00006, r1 = 132 * u, r2 = (k % 10 ? 136 : 141) * u;
       cx.strokeStyle = col(k % 10 ? .25 : .6); cx.lineWidth = 1 * u; cx.beginPath(); cx.moveTo(c + r1 * Math.cos(a), cy + r1 * Math.sin(a)); cx.lineTo(c + r2 * Math.cos(a), cy + r2 * Math.sin(a)); cx.stroke(); }
-    // slow rotating glowing segments (thick, beveled look)
-    const segRot = reduce ? 0 : t * .00007;
-    for (let k = 0; k < 8; k++) { const s = k * TAU / 8 + segRot;
-      cx.lineCap = 'butt'; cx.shadowColor = col(1); cx.shadowBlur = 18 * u;
-      cx.lineWidth = 12 * u; cx.strokeStyle = col(.95); cx.beginPath(); cx.arc(c, cy, 118 * u, s + .07, s + TAU / 8 - .07); cx.stroke();
-      cx.shadowBlur = 0; cx.lineWidth = 3 * u; cx.strokeStyle = 'rgba(255,255,255,.55)'; cx.beginPath(); cx.arc(c, cy, 122 * u, s + .09, s + TAU / 8 - .09); cx.stroke(); }
-    // inner glowing segments, turning the other way
-    for (let k = 0; k < 6; k++) { const s = k * TAU / 6 - segRot * 1.3;
-      cx.lineCap = 'butt'; cx.shadowColor = col(1); cx.shadowBlur = 14 * u;
-      cx.lineWidth = 7 * u; cx.strokeStyle = col(.85); cx.beginPath(); cx.arc(c, cy, 92 * u, s + .1, s + TAU / 6 - .1); cx.stroke();
-      cx.shadowBlur = 0; cx.lineWidth = 2 * u; cx.strokeStyle = 'rgba(255,255,255,.5)'; cx.beginPath(); cx.arc(c, cy, 89 * u, s + .12, s + TAU / 6 - .12); cx.stroke(); }
+    // glowing segment rings spinning about the vertical axis, outer and inner in opposite directions
+    const segRot = reduce ? 0 : t * .00003, spin = reduce ? .5 : t * .0005;
+    const ring3d = (R, n, gap, phi, w, a0, glow) => {
+      const cp = Math.cos(phi), sp = Math.sin(phi);
+      const segs = [];
+      for (let k = 0; k < n; k++) { const s0 = k * TAU / n + segRot + gap, s1 = (k + 1) * TAU / n + segRot - gap, pts = []; let z = 0;
+        for (let j = 0; j <= 14; j++) { const q = s0 + (s1 - s0) * j / 14, ca = Math.cos(q); pts.push([c + R * ca * cp, cy + R * Math.sin(q)]); z += ca * sp; }
+        segs.push({ pts, z: z / 15 }); }
+      segs.sort((p, q) => p.z - q.z).forEach(sg => { const k = .35 + .65 * (sg.z + 1) / 2;
+        cx.lineCap = 'butt'; cx.shadowColor = col(1); cx.shadowBlur = glow * k;
+        cx.lineWidth = w; cx.strokeStyle = col(a0 * k); cx.beginPath(); sg.pts.forEach((p, i) => i ? cx.lineTo(p[0], p[1]) : cx.moveTo(p[0], p[1])); cx.stroke();
+        cx.shadowBlur = 0; cx.lineWidth = w * .25; cx.strokeStyle = 'rgba(255,255,255,' + (.55 * k) + ')'; cx.stroke(); });
+    };
+    ring3d(118 * u, 8, .07, spin, 12 * u, .95, 18 * u);
+    ring3d(92 * u, 6, .1, -spin + Math.PI / 2, 7 * u, .85, 14 * u);
     // counter ring
     cx.setLineDash([4 * u, 6 * u]); cx.strokeStyle = col(.5); cx.lineWidth = 1.2 * u; cx.beginPath(); cx.arc(c, cy, 100 * u, -t * .00012, -t * .00012 + TAU); cx.stroke(); cx.setLineDash([]);
     // inner metal bezel (3D)

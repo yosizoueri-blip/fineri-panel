@@ -248,11 +248,3 @@ textarea, input[type=text] { font: inherit; color: var(--fg); background: rgba(0
 .dp-race { transform: perspective(420px) rotateY(24deg) rotateX(14deg) skewY(-2deg); }
 .dp-hex { transform: perspective(420px) rotateY(-24deg) rotateX(14deg) skewY(2deg); }
 
-/* handwritten labels (numbers stay in the tech face so they read cleanly) */
-:root { --font-script: "Dancing Script", cursive; }
-.dp .row b, .dp-h, .info .row b, .info .dp-h, .gbtn .face > span, .dock button, .logo small {
-  font-family: var(--font-script); text-transform: none; letter-spacing: .02em; }
-.dp .row b, .info .row b { font-size: 1.15em; }
-.dp-h, .info .dp-h { font-size: 11px; }
-.gbtn .face > span { font-size: 1.15em; }
-.dock button { font-size: 13px; }

@@ -1,5 +1,5 @@
-const CACHE = 'fineri-v13';
-const FILES = ['./', 'index.html', 'app.css', 'app.js', 'graph.json', 'forest.jpg', 'nu.jpg', 'nu-honto.jpg', 'holo-nu.jpg', 'bg-face.webp', 'earth-tex.jpg', 'earth-clouds.webp', 'moon-tex.webp', 'races.json', 'icon-192.png', 'manifest.webmanifest'];
+const CACHE = 'fineri-v14';
+const FILES = ['./', 'index.html', 'app.css', 'app.js', 'graph.json', 'forest.jpg', 'nu.jpg', 'nu-honto.jpg', 'holo-nu.jpg', 'bg-face.webp', 'earth-tex.jpg', 'earth-clouds.webp', 'moon-tex.webp', 'earth-night.webp', 'races.json', 'icon-192.png', 'manifest.webmanifest'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).catch(() => {})); self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))); self.clients.claim(); });
 self.addEventListener('fetch', e => {

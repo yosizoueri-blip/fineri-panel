@@ -110,3 +110,6 @@ alb = np.asarray(Image.fromarray((np.clip(alb,0,1)*255).astype('uint8')).filter(
 a = np.zeros((M, M, 4), 'uint8'); a[..., 0] = a[..., 1] = a[..., 2] = (alb * 255).astype('uint8'); a[..., 3] = (inside * 255).astype('uint8')
 Image.fromarray(a, 'RGBA').save(out + '/moon-tex.png', optimize=True)
 print('ok')
+# NOTE (v2.9): earth-tex.jpg / earth-clouds.webp / earth-night.webp now come from NASA Blue Marble / Black Marble
+# images bundled with the three-globe npm package (example/img, MIT repo); moon-tex.webp from the three.js
+# moon_1024.jpg map, reprojected to the near side. See the v2.9 commit for the conversion steps.
