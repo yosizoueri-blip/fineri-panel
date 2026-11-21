@@ -469,3 +469,19 @@ body.eyes-shut .backdrop .face:not(.shut) { opacity: 0; }
   .pc-side .xscan .row { display: grid; grid-template-columns: 130px 1fr 44px; gap: 12px; }
   .pc-side .xscan .xpct { text-align: right; }
 }
+/* PC console v3: frameless glass (iPhone-like) with a soft reflection */
+@media (min-width: 1100px) and (min-height: 601px) {
+  .pc-side, .pc-r { border: 0; border-radius: 26px; clip-path: none; padding: 30px 18px 18px;
+    background: linear-gradient(140deg, rgba(255,255,255,.13), rgba(255,255,255,.04) 35%, rgba(255,255,255,.02) 65%, rgba(255,255,255,.08));
+    -webkit-backdrop-filter: blur(16px) saturate(1.5) brightness(.75); backdrop-filter: blur(16px) saturate(1.5) brightness(.75);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.35), inset 1px 0 0 rgba(255,255,255,.1), inset 0 -1px 0 rgba(255,255,255,.06), 0 24px 60px rgba(0,0,0,.55); }
+  .pc-side::before { top: 10px; opacity: .55; }
+  .pc-side::after, .pc-r::after { left: 0; right: 0; top: 0; bottom: 0; height: auto; opacity: 1; border-radius: inherit; pointer-events: none;
+    background: linear-gradient(118deg, transparent 18%, rgba(255,255,255,.11) 26%, rgba(255,255,255,.03) 34%, transparent 40%, transparent 72%, rgba(255,255,255,.06) 79%, transparent 86%); }
+  .pc-side .dp, .pc-side .dp-l, .pc-side .dp-r { outline: 0; border-radius: 16px; padding: 30px 16px 14px;
+    background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.025));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.18), inset 0 0 0 1px rgba(255,255,255,.04); }
+  .pc-side .dp.dp-btn:hover { box-shadow: inset 0 1px 0 rgba(255,255,255,.3), inset 0 0 0 1px hsl(var(--h) 90% 70% / .35), 0 0 18px hsl(var(--h) 90% 60% / .2); }
+  .pc-side .dp::before { background: none; border-bottom: 0; }
+  .pc-side .dp-h { top: 10px; left: 16px; opacity: .8; }
+}
