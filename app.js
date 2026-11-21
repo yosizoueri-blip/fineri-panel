@@ -1,8 +1,9 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '3.15';
+  const VERSION = '3.16';
   const CHANGELOG = [
+    { v: '3.16', d: '2026-11-21', items: ['TradingView はまずアプリを直接呼ぶ。開かなかったときだけ前のリンク（チャートのページ）を開く'] },
     { v: '3.15', d: '2026-11-21', items: ['TradingView のリンクをチャートのページからトップに変更（アプリが「表示専用モード」で開かないように）'] },
     { v: '3.14', d: '2026-11-21', items: ['顔の位置を前と今の中間に。目がデータパネルにかからない位置'] },
     { v: '3.13', d: '2026-11-21', items: ['顔の絵を下げて、紅いオプティマスが上の COLOR ボタンにかからないように'] },
@@ -644,6 +645,10 @@
   $('closeBtn').addEventListener('click', closeMod); veil.addEventListener('click', closeMod);
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && sheet.classList.contains('open')) closeMod(); });
 
+  // TradingView: call the app directly; if it doesn't come up, fall back to the chart page
+  { const tv = $('tvLink'); if (tv) tv.addEventListener('click', e => { e.preventDefault(); const t0 = Date.now();
+      location.href = 'tradingview://';
+      setTimeout(() => { if (!document.hidden && Date.now() - t0 < 2500) window.open(tv.href, '_blank', 'noopener'); }, 1200); }); }
   /* ---------- memos, tasks ---------- */
   ['memo-market', 'memo-keiba'].forEach(id => { const el = $(id); if (!el) return; el.value = load('fineri.' + id, ''); el.addEventListener('input', () => save('fineri.' + id, el.value)); });
   let tasks = load('fineri.tasks', [{ id: 't1', text: '例: 週末の重賞をチェック', done: false }]);
