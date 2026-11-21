@@ -1,8 +1,9 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '3.31';
+  const VERSION = '3.32';
   const CHANGELOG = [
+    { v: '3.32', d: '2026-11-22', items: ['PC: 両サイドを画面の端に寄せて細くし、アングロの顔が見えるように。ガラスも少し明るく', 'PC: 宝石まわりのシナプスを濃く', 'スマホ横: 右のパネルがボタンや時計にかぶらないように（iPhoneの切り欠き分も考える）'] },
     { v: '3.31', d: '2026-11-22', items: ['PC: ダミーパネルを追加（BIO 心電図・GEO・MEM ヒートマップ・THREAT）、NETとPOWERの行も増やした', 'スマホ横向きもPCと同じ形に: 両サイドがガラスの操作盤、真ん中に宝石・時計・ボタン'] },
     { v: '3.30', d: '2026-11-22', items: ['PC: 両サイドを枠なしのガラスに。後ろがぼけて、ななめに光の反射が入る'] },
     { v: '3.29', d: '2026-11-22', items: ['PC: 両サイドの操作盤をデザインし直し。見出しタブ・四隅の枠に変更', 'すき間を埋める動く表示を追加: 波形・レーダー・メーター・軌道', '左右そろえて表示、ログは最初から流れている'] },
@@ -248,7 +249,7 @@
     // 2) its reflection: the ring around the core, wired into the crystal (the crystal is fineri, the hub note)
     const ld = fit(linkCv), LW = linkCv.width, lc = LW / 2; lx.clearRect(0, 0, LW, LW);
     lx.save(); lx.beginPath(); lx.rect(0, 0, LW, LW); lx.arc(lc, lc, LW * .085, 0, TAU, true); lx.clip();
-    lx.globalAlpha = .12;
+    lx.globalAlpha = innerWidth >= 1100 ? .34 : .12;
     drawGraph(lx, ld, place(ring, lc, lc, LW, LW, rot * .6, t), Math.max(.7, Math.min(1.2, LW / ld / 380)), LW * .45, col, t, .5);
     lx.globalAlpha = 1; lx.restore();
   }

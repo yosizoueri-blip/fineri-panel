@@ -469,13 +469,13 @@ body.eyes-shut .backdrop .face:not(.shut) { opacity: 0; }
 
 /* phone held sideways: same layout as the PC (glass consoles on both sides), scaled down */
 @media (orientation: landscape) and (max-height: 600px) and (min-width: 640px) {
-  .app { max-width: none; width: calc(100dvh * 1.08); min-height: 0; padding-block: 4px; padding-inline: 0; }
+  .app { max-width: none; width: 100dvh; min-height: 0; padding-block: 4px; padding-inline: 0 !important; }
   .sky { display: none; }
   .mid { margin-top: 0; }
   .gbtn[data-open="talk"] { margin-top: 0; }
   .info { padding: 2px 8px; } .info .t { font-size: 22px; } .info .stat { font-size: 9px; }
   .dock { padding: 6px 8px 2px; margin-top: 2px; }
-  .pc-side { top: 6px; bottom: 6px; width: calc((100vw - 100dvh * 1.08) / 2 - 16px); padding: 20px 8px 8px; gap: 6px; border-radius: 16px; }
+  .pc-side { top: 6px; bottom: 6px; width: calc((100vw - 100dvh) / 2 - 14px - max(env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px))); padding: 20px 8px 8px; gap: 6px; border-radius: 16px; }
   .pc-l { right: auto; left: max(8px, env(safe-area-inset-left, 0px)); }
   .pc-r { left: auto; right: max(8px, env(safe-area-inset-right, 0px)); }
   .pc-side::before { top: 6px; left: 14px; font-size: 7px; } .pc-r::before { left: auto; right: 14px; }
@@ -488,7 +488,7 @@ body.eyes-shut .backdrop .face:not(.shut) { opacity: 0; }
   .pc-side .dp-race .n { overflow: hidden; text-overflow: ellipsis; }
   .pc-side .dp-x:not(.pc-grow), .v-orbit, .v-gauge { display: none !important; }
   .pc-side .xscan .row { grid-template-columns: 70px 1fr 28px; gap: 5px; } .pc-side .xlog { font-size: 9px; }
-  .gbtn svg { width: 14px; } .gbtn .face span { font-size: 7.5px; letter-spacing: 0; }
+  .gbtn svg { width: 13px; } .gbtn .face span { font-size: 6.5px; letter-spacing: 0; }
   .logo { font-size: 15px; } .logo small { font-size: 7px; }
   .head button, .head .chip { font-size: 9px !important; padding: 4px 7px !important; }
   .info .t { font-size: 17px; } .info .stat { font-size: 8px; } .info .dp-h { font-size: 7px; }
@@ -512,3 +512,11 @@ body.eyes-shut .backdrop .face:not(.shut) { opacity: 0; }
   .xthreat { font: 700 34px var(--font-tech); letter-spacing: .2em; color: var(--up); text-shadow: 0 0 14px var(--up); text-align: center; margin: 2px 0 6px; }
 }
 @media (min-width: 1100px) and (min-height: 601px) and (max-height: 900px) { .pc-pair { display: none; } }
+
+/* PC: consoles sit at the screen edges and stop before the face; lighter glass so the art shows through */
+@media (min-width: 1100px) and (min-height: 601px) {
+  .pc-side { width: min(440px, calc((100vw - min(110dvh, 1100px) * .64) / 2 - 22px)); }
+  .pc-l { right: auto; left: 12px; } .pc-r { left: auto; right: 12px; }
+  .pc-side, .pc-r { -webkit-backdrop-filter: blur(10px) saturate(1.4) brightness(.9); backdrop-filter: blur(10px) saturate(1.4) brightness(.9); }
+}
+@media (min-width: 1100px) and (min-height: 601px) and (max-height: 900px) { .sky { height: 29dvh; } }
