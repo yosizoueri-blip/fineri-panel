@@ -293,7 +293,9 @@ body.zooming .app > :not(.mid), body.zooming .dp, body.zooming #core, body.zoomi
 #wxfx { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
 
 /* v3.8 */
-.gbtn.flying .face { background: radial-gradient(120% 90% at 30% 20%, hsl(var(--h) 60% 30%), hsl(var(--h) 70% 7%) 70%); -webkit-backdrop-filter: none; backdrop-filter: none; }
+.gbtn.flying .face { background: radial-gradient(120% 90% at 30% 20%, hsl(var(--h) 60% 35% / .32), hsl(var(--h) 70% 8% / .38) 70%); -webkit-backdrop-filter: blur(6px) saturate(1.1); backdrop-filter: blur(6px) saturate(1.1); }
+.gbtn span { color: hsl(var(--h) 18% 82%); }
+.gbtn svg { stroke: hsl(var(--h) 35% 80%); }
 #glitch { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 60; pointer-events: none; image-rendering: pixelated; mix-blend-mode: screen; opacity: 0; }
 body.glitching #glitch { opacity: 1; }
 body.glitching .app, body.glitching .sheet.open { transform: translateX(var(--gx, 0)); filter: drop-shadow(3px 0 0 rgba(255,40,80,.5)) drop-shadow(-3px 0 0 hsl(var(--h) 100% 60% / .6)); }
@@ -308,3 +310,6 @@ body.glitching .app, body.glitching .sheet.open { transform: translateX(var(--gx
   100% { transform: scale(0, .006); filter: brightness(6); opacity: 0 } }
 .gbtn.slam { animation: slam .26s ease-out; }
 @keyframes slam { 0% { transform: translate(-50%, -50%) scale(.86) } 45% { transform: translate(-50%, -50%) scale(1.06) } 100% { transform: translate(-50%, -50%) scale(1) } }
+/* v3.11: the rim is a frame only, so the face shows what's behind it like glass */
+.gbtn .rim { padding: 6.2%; -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
+.gbtn .gear { -webkit-mask: radial-gradient(circle closest-side, transparent 72%, #000 74%); mask: radial-gradient(circle closest-side, transparent 72%, #000 74%); }
