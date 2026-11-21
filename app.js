@@ -1,8 +1,9 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '2.9';
+  const VERSION = '3.0';
   const CHANGELOG = [
+    { v: '3.0', d: '2026-11-21', items: ['地球・太陽・月を薄くして背景になじませた（メイン画面 完成）'] },
     { v: '2.9', d: '2026-11-21', items: [
       '地球をNASAの衛星写真ベースに（山の陰影、雲、夜側の街の灯り）',
       '月を本物の月面写真ベースに',
