@@ -1,8 +1,9 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '3.19';
+  const VERSION = '3.20';
   const CHANGELOG = [
+    { v: '3.20', d: '2026-11-21', items: ['光るリングが回ると、手前の半分は宝石の前を通るように（今までずっと宝石のうしろだった）'] },
     { v: '3.19', d: '2026-11-21', items: ['中央の光るリングが相場で色づく: 外側=BTC、内側=日経平均。直近1時間で上がれば緑、下がれば赤。±5%でいちばん濃く'] },
     { v: '3.18', d: '2026-11-21', items: ['夜は太陽が地球のうしろへ消えるように（夕方から薄れていく）', '月の下側が光って見えていたのを修正（大気の光が月にかぶっていた）', '月を明るく。満ち欠けは空で見える向きのまま'] },
     { v: '3.17', d: '2026-11-21', items: ['PayPay証券・Bitget・bitFlyer・十六銀行は iPhone のショートカット（PAYPAY / BITGET / BITFLYER / JUROKU）経由でアプリを開く。ブラウザ用リンクは下に'] },
@@ -458,12 +459,17 @@
     // ring colour follows the market: green when up, red when down over the last hour, deepest at ±5%
     const mk = (pct, a) => { if (!pct) return null; const m = Math.pow(Math.min(1, Math.abs(pct) / 5), .6);
       return { m, c: pct > 0 ? 'hsla(150,100%,' + (62 - 12 * m) + '%,' + a + ')' : 'hsla(352,100%,' + (62 - 10 * m) + '%,' + a + ')' }; };
-    const ring3d = (R, n, gap, phi, w, a0, glow, pct) => {
+    // pass 'back' draws the half behind the crystal, 'front' the half in front of it
+    const ring3d = (R, n, gap, phi, w, a0, glow, pct, pass) => {
       const cp = Math.cos(phi), sp = Math.sin(phi);
       const segs = [];
-      for (let k = 0; k < n; k++) { const s0 = k * TAU / n + segRot + gap, s1 = (k + 1) * TAU / n + segRot - gap, pts = []; let z = 0;
-        for (let j = 0; j <= 14; j++) { const q = s0 + (s1 - s0) * j / 14, ca = Math.cos(q); pts.push([c + R * ca * cp, cy + R * Math.sin(q)]); z += ca * sp; }
-        segs.push({ pts, z: z / 15 }); }
+      for (let k = 0; k < n; k++) { const s0 = k * TAU / n + segRot + gap, s1 = (k + 1) * TAU / n + segRot - gap;
+        let run = [], zs = 0;
+        const flush = () => { if (run.length > 1) segs.push({ pts: run, z: zs / run.length }); run = []; zs = 0; };
+        for (let j = 0; j <= 24; j++) { const q = s0 + (s1 - s0) * j / 24, z = Math.cos(q) * sp, front = z >= 0;
+          if ((pass === 'front') !== front) { flush(); continue; }
+          run.push([c + R * Math.cos(q) * cp, cy + R * Math.sin(q)]); zs += z; }
+        flush(); }
       segs.sort((p, q) => p.z - q.z).forEach(sg => { const k = .35 + .65 * (sg.z + 1) / 2;
         const mc = mk(pct, 1), m = mc ? mc.m : 0;
         cx.lineCap = 'butt'; cx.shadowColor = m > .35 ? mc.c : col(1); cx.shadowBlur = glow * k;
@@ -471,8 +477,9 @@
         if (m) { cx.strokeStyle = mk(pct, a0 * k * (.35 + .65 * m)).c; cx.stroke(); }
         cx.shadowBlur = 0; cx.lineWidth = w * .25; cx.strokeStyle = 'rgba(255,255,255,' + (.55 * k) + ')'; cx.stroke(); });
     };
-    ring3d(118 * u, 8, .07, spin, 12 * u, .95, 18 * u, signal.test === 'up' ? 5 : signal.test === 'down' ? -5 : signal.test === 'split' ? 2 : signal.btc);
-    ring3d(92 * u, 6, .1, -spin + Math.PI / 2, 7 * u, .85, 14 * u, signal.test === 'up' ? 5 : signal.test === 'down' ? -5 : signal.test === 'split' ? -2 : signal.nk);
+    const pB = signal.test === 'up' ? 5 : signal.test === 'down' ? -5 : signal.test === 'split' ? 2 : signal.btc, pN = signal.test === 'up' ? 5 : signal.test === 'down' ? -5 : signal.test === 'split' ? -2 : signal.nk;
+    const rings = pass => { ring3d(118 * u, 8, .07, spin, 12 * u, .95, 18 * u, pB, pass); ring3d(92 * u, 6, .1, -spin + Math.PI / 2, 7 * u, .85, 14 * u, pN, pass); };
+    rings('back');
     // counter ring
     cx.setLineDash([4 * u, 6 * u]); cx.strokeStyle = col(.5); cx.lineWidth = 1.2 * u; cx.beginPath(); cx.arc(c, cy, 100 * u, -t * .00012, -t * .00012 + TAU); cx.stroke(); cx.setLineDash([]);
     // inner metal bezel (3D)
@@ -505,6 +512,7 @@
     } else gem(c, cy + bob, 46 * u, rot, fillFor(mode), t);
     if (!reduce) orbits(c, cy + bob, 46 * u, t, true);
     cx.shadowBlur = 0;
+    rings('front');
     // sparkle
     const sp = (Math.sin(t * .003) + 1) / 2; cx.fillStyle = 'rgba(255,255,255,' + (.3 + .6 * sp) + ')';
     cx.beginPath(); cx.arc(c - 14 * u, cy - 30 * u + bob, 2.2 * u, 0, TAU); cx.fill();
