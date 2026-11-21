@@ -1,8 +1,13 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '2.1';
+  const VERSION = '2.2';
   const CHANGELOG = [
+    { v: '2.2', d: '2026-11-21', items: [
+      '地球を下へ移動。ボタンの下で回る、軌道リングつき',
+      'ぬーちゃんが画像ごと跳ねるのをやめた。かわりにホログラムが時々ゆらぐ',
+      '色を16色に（緑と赤は水晶の合図用にとっておく）',
+      'ガラスの下に fineri の絵2枚をうっすら写し込んだ'] },
     { v: '2.1', d: '2026-11-21', items: [
       'オプティマスのつながりを中央コアのまわりに集めて、目立つように',
       'よくつながっているメモほど大きく光る。線の上を光が走り、数秒ごとに中心から脈が広がる',
@@ -39,11 +44,13 @@
   }
 
   /* ---------- tone ---------- */
-  const TONES = [['シアン', 195], ['アンバー', 38], ['パープル', 268], ['ブルー', 222], ['ホワイト', 205, true]];
+  // 16 base colours. Pure green and red stay reserved for the crystal's market signal.
+  const TONES = [['シアン', 195], ['アクア', 184], ['ティール', 172], ['スカイ', 206], ['ブルー', 222], ['インディゴ', 238], ['バイオレット', 254], ['パープル', 268],
+    ['マゼンタ', 288], ['ピンク', 314], ['ローズ', 332], ['オレンジ', 24], ['アンバー', 38], ['ゴールド', 48], ['レモン', 62], ['ホワイト', 205, true]];
   let hue = 195, white = false;
   const tone = document.querySelector('.tone');
   function setTone(i) {
-    const t = TONES[i] || TONES[0]; hue = t[1]; white = !!t[2];
+    const t = TONES[i] || TONES[0]; i = TONES.indexOf(t); hue = t[1]; white = !!t[2];
     root.style.setProperty('--h', hue);
     if (white) { root.style.setProperty('--c', 'hsl(205 40% 88%)'); root.style.setProperty('--c2', '#ffffff'); }
     else { root.style.removeProperty('--c'); root.style.removeProperty('--c2'); }
@@ -160,7 +167,6 @@
   function drawSky(t) {
     const d = fit(sky), W = sky.width, H = sky.height; sx.clearRect(0, 0, W, H);
     const n = jst(), hr = n.getUTCHours() + n.getUTCMinutes() / 60 + n.getUTCSeconds() / 3600;
-    const R = Math.max(W * .62, H * 1.1), gx = W / 2, gy = H + R * .62; // globe centre below the band
     const arcY = f => H * .92 - Math.sin(Math.PI * f) * H * .78;
     const arcX = f => W * (.06 + .88 * f);
     // sun
@@ -190,25 +196,39 @@
       sx.fillStyle = dark; sx.beginPath(); sx.arc(x, y, r, Math.PI / 2, -Math.PI / 2, !waxing); sx.fill();
       sx.fillStyle = k > 0 ? dark : lit; sx.beginPath(); sx.ellipse(x, y, Math.abs(k) * r + .01, r, 0, 0, TAU); sx.fill();
     }
-    // globe
-    sx.save();
-    const halo = sx.createRadialGradient(gx, gy, R * .9, gx, gy, R * 1.12); halo.addColorStop(0, col(0)); halo.addColorStop(.5, col(.35)); halo.addColorStop(1, col(0));
-    sx.fillStyle = halo; sx.beginPath(); sx.arc(gx, gy, R * 1.12, 0, TAU); sx.fill();
-    const body = sx.createRadialGradient(gx, gy - R * .6, 0, gx, gy, R); body.addColorStop(0, col(.22, 30)); body.addColorStop(1, 'rgba(0,4,10,.95)');
-    sx.fillStyle = body; sx.beginPath(); sx.arc(gx, gy, R, 0, TAU); sx.fill();
-    sx.beginPath(); sx.arc(gx, gy, R, 0, TAU); sx.clip();
+  }
+
+  /* ---------- earth (bottom, under the buttons) ---------- */
+  const earthCv = $('earth'), ex = earthCv.getContext('2d');
+  function drawEarth(t) {
+    const d = fit(earthCv), W = earthCv.width, H = earthCv.height; ex.clearRect(0, 0, W, H);
+    const R = Math.min(W * .43, H * 1.05), gx = W / 2, gy = H * .3 + R; // dome rising from below
+    // orbit rings around the planet
+    ex.lineWidth = 1 * d;
+    [[1.5, .2, .22], [1.28, .16, .3], [1.75, .26, .14]].forEach(([k, f, a], i) => {
+      ex.strokeStyle = col(a); if (i === 2) ex.setLineDash([3 * d, 6 * d]);
+      ex.beginPath(); ex.ellipse(gx, gy - R * .62, R * k, R * k * f, 0, 0, TAU); ex.stroke(); ex.setLineDash([]); });
+    const sweep = reduce ? 0 : (t * .0006) % TAU;
+    ex.fillStyle = col(.9, 85); ex.beginPath(); ex.arc(gx + Math.cos(sweep) * R * 1.5, gy - R * .62 + Math.sin(sweep) * R * 1.5 * .2, 2 * d, 0, TAU); ex.fill();
+    ex.save();
+    const halo = ex.createRadialGradient(gx, gy, R * .9, gx, gy, R * 1.12); halo.addColorStop(0, col(0)); halo.addColorStop(.5, col(.35)); halo.addColorStop(1, col(0));
+    ex.fillStyle = halo; ex.beginPath(); ex.arc(gx, gy, R * 1.12, 0, TAU); ex.fill();
+    const body = ex.createRadialGradient(gx, gy - R * .6, 0, gx, gy, R); body.addColorStop(0, col(.22, 30)); body.addColorStop(1, 'rgba(0,4,10,.95)');
+    ex.fillStyle = body; ex.beginPath(); ex.arc(gx, gy, R, 0, TAU); ex.fill();
+    ex.beginPath(); ex.arc(gx, gy, R, 0, TAU); ex.clip();
     const rot = reduce ? 0 : t * .00004, tilt = .42;
     const proj = (lat, lon) => { const x = Math.cos(lat) * Math.sin(lon + rot), y = Math.sin(lat), z = Math.cos(lat) * Math.cos(lon + rot);
       const y2 = y * Math.cos(tilt) - z * Math.sin(tilt), z2 = y * Math.sin(tilt) + z * Math.cos(tilt); return [gx + x * R, gy - y2 * R, z2]; };
-    sx.lineWidth = 1 * d;
-    for (let lo = 0; lo < 12; lo++) { sx.strokeStyle = col(.18); sx.beginPath(); let pen = false;
-      for (let la = -1.5; la <= 1.5; la += .06) { const p = proj(la, lo * Math.PI / 6); if (p[2] < 0) { pen = false; continue; } pen ? sx.lineTo(p[0], p[1]) : sx.moveTo(p[0], p[1]); pen = true; } sx.stroke(); }
-    for (let la = -60; la <= 60; la += 20) { sx.strokeStyle = col(.15); sx.beginPath(); let pen = false;
-      for (let lo = 0; lo <= TAU + .05; lo += .05) { const p = proj(la * Math.PI / 180, lo); if (p[2] < 0) { pen = false; continue; } pen ? sx.lineTo(p[0], p[1]) : sx.moveTo(p[0], p[1]); pen = true; } sx.stroke(); }
-    land.forEach(([la, lo]) => { const p = proj(la, lo); if (p[2] < .05) return; sx.fillStyle = col(.25 + .55 * p[2], 72); sx.fillRect(p[0], p[1], 1.6 * d, 1.6 * d); });
-    sx.restore();
-    sx.strokeStyle = col(.8); sx.lineWidth = 1.5 * d; sx.shadowColor = col(1); sx.shadowBlur = 14 * d;
-    sx.beginPath(); sx.arc(gx, gy, R, Math.PI * 1.1, Math.PI * 1.9); sx.stroke(); sx.shadowBlur = 0;
+    ex.lineWidth = 1 * d;
+    for (let lo = 0; lo < 12; lo++) { ex.strokeStyle = col(.18); ex.beginPath(); let pen = false;
+      for (let la = -1.5; la <= 1.5; la += .06) { const p = proj(la, lo * Math.PI / 6); if (p[2] < 0) { pen = false; continue; } pen ? ex.lineTo(p[0], p[1]) : ex.moveTo(p[0], p[1]); pen = true; } ex.stroke(); }
+    for (let la = -60; la <= 60; la += 20) { ex.strokeStyle = col(.15); ex.beginPath(); let pen = false;
+      for (let lo = 0; lo <= TAU + .05; lo += .05) { const p = proj(la * Math.PI / 180, lo); if (p[2] < 0) { pen = false; continue; } pen ? ex.lineTo(p[0], p[1]) : ex.moveTo(p[0], p[1]); pen = true; } ex.stroke(); }
+    land.forEach(([la, lo]) => { const p = proj(la, lo); if (p[2] < .05) return; ex.fillStyle = col(.25 + .55 * p[2], 72); ex.fillRect(p[0], p[1], 1.6 * d, 1.6 * d); });
+    ex.restore();
+    ex.strokeStyle = col(.8); ex.lineWidth = 1.5 * d; ex.shadowColor = col(1); ex.shadowBlur = 14 * d;
+    ex.beginPath(); ex.arc(gx, gy, R, Math.PI * 1.1, Math.PI * 1.9); ex.stroke(); ex.shadowBlur = 0;
+  
   }
 
   /* ---------- core: rings + crystal ---------- */
@@ -371,7 +391,7 @@
   function nuClock(n) { const h = n.getUTCHours(); nu.classList.toggle('is-real', h === 12 || Date.now() < realUntil); }
   nu.addEventListener('click', () => { realUntil = Date.now() + 6000; nuClock(jst()); nuSay(jst().getUTCHours() === 12 ? 'お昼はこの姿でいるね' : '……ちょっとだけ、本当の姿'); });
   const lines = ['きゅー', '森の見回り中', '……（しっぽふりふり）', 'fineri、あそぼ', 'ねむい……'];
-  (function idle() { if (!reduce && !sheet.classList.contains('open')) { nu.classList.remove('hop'); void nu.offsetWidth; nu.classList.add('hop'); if (Math.random() < .4) nuSay(lines[(Math.random() * lines.length) | 0]); } setTimeout(idle, 8000 + Math.random() * 9000); })();
+  (function idle() { if (!reduce && !sheet.classList.contains('open')) { nu.classList.remove('glitch'); void nu.offsetWidth; nu.classList.add('glitch'); if (Math.random() < .4) nuSay(lines[(Math.random() * lines.length) | 0]); } setTimeout(idle, 8000 + Math.random() * 9000); })();
   const h0 = jst().getUTCHours();
   setTimeout(() => nuSay(h0 < 5 ? 'まだ起きてるの？' : h0 < 11 ? 'おはよ' : h0 < 18 ? 'おかえり' : 'おつかれ'), 1200);
 
@@ -404,7 +424,7 @@
   /* ---------- boot ---------- */
   fetch('graph.json', { cache: 'no-store' }).then(r => r.json()).then(g => { GRAPH = g; layout(); $('stMem').textContent = g.n + ' NOTES / ' + g.e.length + ' LINKS'; }).catch(() => { $('stMem').textContent = '-'; });
   tick(); setInterval(tick, 1000);
-  function frame(t) { drawField(t); drawSky(t); drawCore(t); if (!reduce) requestAnimationFrame(frame); }
+  function frame(t) { drawField(t); drawSky(t); drawEarth(t); drawCore(t); if (!reduce) requestAnimationFrame(frame); }
   requestAnimationFrame(frame);
   if (reduce) setInterval(() => frame(performance.now()), 30000);
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});

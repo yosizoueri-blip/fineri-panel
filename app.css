@@ -67,15 +67,16 @@ button { font: inherit; }
 .nu .real img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .nu.is-real .real { opacity: 1; }
 .nu.is-real .holo { opacity: 0; }
-.nu.hop { animation: hop .8s ease; }
-@keyframes hop { 30% { transform: translateY(-14px) rotate(-3deg) } 60% { transform: none } }
+.nu.glitch .holo { animation: glitch .9s steps(1); }
+@keyframes glitch { 0% { opacity: .85 } 10% { opacity: .35; filter: hue-rotate(25deg) } 18% { opacity: .9; clip-path: inset(30% 0 40% 0); transform: translateX(3px) }
+  26% { clip-path: none; transform: none; opacity: .5 } 34% { opacity: .95 } 60% { opacity: .7 } 100% { opacity: .85; filter: none } }
 .nu-say { position: absolute; right: 30%; top: 70%; z-index: 3; font-size: 12px; padding: 4px 10px; background: hsl(var(--h) 60% 8% / .85); border: 1px solid var(--edge);
   color: var(--c2); white-space: nowrap; opacity: 0; transform: translateY(4px); transition: opacity .3s, transform .3s; pointer-events: none;
   clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px); }
 .nu-say.show { opacity: 1; transform: none; }
 
 /* stage: circle of buttons around the crystal */
-.stage { position: relative; width: 100%; aspect-ratio: 1; margin-top: -24px; }
+.stage { position: relative; z-index: 1; width: 100%; aspect-ratio: 1; margin-top: -24px; }
 #core { position: absolute; inset: 0; width: 100%; height: 100%; }
 .gbtn { position: absolute; z-index: 3; width: 21%; aspect-ratio: 1; transform: translate(-50%, -50%); border: 0; padding: 0; background: none; cursor: pointer; color: var(--fg);
   transition: left .9s cubic-bezier(.2,.8,.2,1), top .9s cubic-bezier(.2,.8,.2,1);
@@ -100,7 +101,8 @@ button { font: inherit; }
 
 /* info panel */
 .info { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 14px; align-items: center; padding: 14px 18px;
-  background: linear-gradient(180deg, hsl(var(--h) 50% 10% / .85), hsl(var(--h) 60% 4% / .92)); border: 1px solid var(--edge);
+  background: linear-gradient(180deg, hsl(var(--h) 50% 10% / .62), hsl(var(--h) 60% 4% / .78)); border: 1px solid var(--edge);
+  -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
   clip-path: polygon(16px 0, calc(100% - 16px) 0, 100% 16px, 100% calc(100% - 16px), calc(100% - 16px) 100%, 16px 100%, 0 calc(100% - 16px), 0 16px); }
 .info .t { font-family: var(--font-tech); font-weight: 700; font-size: 36px; line-height: 1; letter-spacing: .04em; font-variant-numeric: tabular-nums; text-shadow: 0 0 12px var(--c); }
 .info .d { font-family: var(--font-tech); font-size: 13px; letter-spacing: .14em; color: var(--mut); margin-top: 4px; }
@@ -125,7 +127,7 @@ button { font: inherit; }
   clip-path: polygon(29.3% 0, 70.7% 0, 100% 29.3%, 100% 70.7%, 70.7% 100%, 29.3% 100%, 0 70.7%, 0 29.3%); }
 .dock svg { width: 24px; height: 24px; stroke: var(--c2); fill: none; stroke-width: 1.6; }
 .dock button:hover i { background: linear-gradient(150deg, hsl(var(--h) 60% 28%), hsl(var(--h) 60% 8%)); }
-.tone { display: flex; justify-content: center; gap: 12px; padding-top: 4px; }
+.tone { display: grid; grid-template-columns: repeat(8, 26px); justify-content: center; gap: 10px 12px; padding-top: 4px; }
 .tone button { width: 26px; height: 26px; border: 2px solid var(--bg); outline: 1px solid var(--dim); padding: 0; cursor: pointer;
   clip-path: polygon(29.3% 0, 70.7% 0, 100% 29.3%, 100% 70.7%, 70.7% 100%, 29.3% 100%, 0 70.7%, 0 29.3%); }
 .tone button[aria-pressed="true"] { outline: 2px solid #fff; transform: scale(1.15); }
@@ -184,3 +186,19 @@ textarea, input[type=text] { font: inherit; color: var(--fg); background: rgba(0
   .info .t { font-size: 30px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* earth under the buttons */
+.earth { position: relative; z-index: 0; pointer-events: none; height: clamp(150px, 22vh, 210px);
+  margin: -96px calc(-1 * max(14px, env(safe-area-inset-left, 0px))) -64px; }
+#earth { position: absolute; inset: 0; width: 100%; height: 100%;
+  -webkit-mask-image: linear-gradient(transparent, #000 18%, #000 62%, transparent); mask-image: linear-gradient(transparent, #000 18%, #000 62%, transparent); }
+.info { z-index: 2; }
+
+/* faint artwork under the glass: eerie + modern */
+.backdrop { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.backdrop i { position: absolute; left: 50%; width: min(130vw, 720px); transform: translateX(-50%); background: center / cover no-repeat;
+  opacity: .17; filter: saturate(.7) brightness(.8) contrast(1.15); }
+.backdrop .face { top: 4vh; aspect-ratio: 900 / 1072; background-image: url(bg-face.jpg);
+  -webkit-mask-image: radial-gradient(closest-side, #000 45%, transparent); mask-image: radial-gradient(closest-side, #000 45%, transparent); }
+.backdrop .master { bottom: -6vh; aspect-ratio: 900 / 1125; background-image: url(bg-master.jpg); opacity: .14;
+  -webkit-mask-image: linear-gradient(transparent, #000 35%, #000 70%, transparent); mask-image: linear-gradient(transparent, #000 35%, #000 70%, transparent); }
