@@ -1,8 +1,9 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '2.2';
+  const VERSION = '2.3';
   const CHANGELOG = [
+    { v: '2.3', d: '2026-11-21', items: ['下地の絵を濃くして、はっきり見えるように'] },
     { v: '2.2', d: '2026-11-21', items: [
       '地球を下へ移動。ボタンの下で回る、軌道リングつき',
       'ぬーちゃんが画像ごと跳ねるのをやめた。かわりにホログラムが時々ゆらぐ',

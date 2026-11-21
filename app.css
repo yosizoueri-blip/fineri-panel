@@ -197,8 +197,8 @@ textarea, input[type=text] { font: inherit; color: var(--fg); background: rgba(0
 /* faint artwork under the glass: eerie + modern */
 .backdrop { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
 .backdrop i { position: absolute; left: 50%; width: min(130vw, 720px); transform: translateX(-50%); background: center / cover no-repeat;
-  opacity: .17; filter: saturate(.7) brightness(.8) contrast(1.15); }
+  opacity: .42; filter: saturate(.85) contrast(1.1); }
 .backdrop .face { top: 4vh; aspect-ratio: 900 / 1072; background-image: url(bg-face.jpg);
-  -webkit-mask-image: radial-gradient(closest-side, #000 45%, transparent); mask-image: radial-gradient(closest-side, #000 45%, transparent); }
-.backdrop .master { bottom: -6vh; aspect-ratio: 900 / 1125; background-image: url(bg-master.jpg); opacity: .14;
+  -webkit-mask-image: radial-gradient(closest-side, #000 45%, transparent); mask-image: radial-gradient(closest-side, #000 60%, transparent); }
+.backdrop .master { bottom: -6vh; aspect-ratio: 900 / 1125; background-image: url(bg-master.jpg); opacity: .38;
   -webkit-mask-image: linear-gradient(transparent, #000 35%, #000 70%, transparent); mask-image: linear-gradient(transparent, #000 35%, #000 70%, transparent); }
