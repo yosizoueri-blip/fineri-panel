@@ -1,0 +1,12 @@
+{"note": "Graded races (JRA). Edit dates here if the calendar differs.",
+ "races": [
+  {"date": "2026-11-22", "name": "MILE CHAMPIONSHIP", "grade": "G1", "course": "KYOTO T1600"},
+  {"date": "2026-11-28", "name": "KYOTO NISAI STAKES", "grade": "G3", "course": "KYOTO T2000"},
+  {"date": "2026-11-29", "name": "JAPAN CUP", "grade": "G1", "course": "TOKYO T2400"},
+  {"date": "2026-11-29", "name": "KEIHAN HAI", "grade": "G3", "course": "KYOTO T1200"},
+  {"date": "2026-12-05", "name": "STAYERS STAKES", "grade": "G2", "course": "NAKAYAMA T3600"},
+  {"date": "2026-12-06", "name": "CHAMPIONS CUP", "grade": "G1", "course": "CHUKYO D1800"},
+  {"date": "2026-12-13", "name": "HANSHIN JUVENILE FILLIES", "grade": "G1", "course": "HANSHIN T1600"},
+  {"date": "2026-12-20", "name": "ASAHI HAI FUTURITY", "grade": "G1", "course": "HANSHIN T1600"},
+  {"date": "2026-12-27", "name": "ARIMA KINEN", "grade": "G1", "course": "NAKAYAMA T2500"}
+ ]}

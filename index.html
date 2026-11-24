@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FINERI</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FINERI">
+<meta name="theme-color" content="#01040a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="app.css?v=3.52">
+</head>
+<body>
+<canvas id="brain" aria-hidden="true"></canvas>
+<div class="backdrop" aria-hidden="true"><i class="face"></i><i class="face shut"></i></div>
+<div class="sunlight" aria-hidden="true"></div>
+<canvas id="wxfx" aria-hidden="true"></canvas>
+<canvas id="field" aria-hidden="true"></canvas>
+<div class="vignette" aria-hidden="true"></div>
+
+<!-- PC only: two side columns; the data panels move here on big screens, plus extra decorative panels -->
+<aside class="pc-side pc-l">
+  <div class="pc-pair pc-only">
+    <div class="dp dp-l dp-x pc-half" aria-hidden="true"><div class="dp-h">BIO // VITALS</div>
+      <div class="row"><b>HEART</b><span id="xHr">-</span></div><div class="row"><b>SPO2</b><span id="xO2">-</span></div><canvas class="pc-viz v-ecg"></canvas></div>
+    <div class="dp dp-l dp-x pc-half" aria-hidden="true"><div class="dp-h">GEO // LOCK</div>
+      <div class="row"><b>LAT</b><span id="xLa">-</span></div><div class="row"><b>LON</b><span id="xLo">-</span></div>
+      <div class="row"><b>ALT</b><span id="xAl">-</span></div><div class="row"><b>HDG</b><span id="xHd">-</span></div></div>
+  </div>
+  <div class="dp dp-l dp-x pc-only" aria-hidden="true"><div class="dp-h">NET // UPLINK</div>
+    <div class="row"><b>LATENCY</b><span id="xLat">-</span></div><div class="row"><b>PACKETS</b><span id="xPkt">-</span></div>
+    <div class="row"><b>NODES</b><span id="xNode">-</span></div><div class="row"><b>JITTER</b><span id="xJit">-</span></div><div class="row"><b>LOSS</b><span id="xLoss">-</span></div><div class="bars wide" id="xNetBars"></div></div>
+  <div class="dp dp-l dp-x pc-only pc-grow" aria-hidden="true"><div class="dp-h">FOREST // SCAN</div><div id="xScan"></div></div>
+</aside>
+<aside class="pc-side pc-r">
+  <div class="pc-pair pc-only">
+    <div class="dp dp-r dp-x pc-half" aria-hidden="true"><div class="dp-h">MEM // HEAP</div><div class="xheat" id="xHeat"></div>
+      <div class="row"><b>USED</b><span id="xMem">-</span></div></div>
+    <div class="dp dp-r dp-x pc-half" aria-hidden="true"><div class="dp-h">THREAT // LEVEL</div><div class="xthreat" id="xThr">LOW</div>
+      <div class="row"><b>SECTOR</b><span id="xSec">-</span></div><div class="row"><b>WARD</b><span id="xWard">-</span></div></div>
+  </div>
+  <div class="dp dp-r dp-x pc-only" aria-hidden="true"><div class="dp-h">POWER // CORE</div>
+    <div class="row"><b>OUTPUT</b><span id="xPow">-</span></div><div class="row"><b>TEMP</b><span id="xTmp">-</span></div>
+    <div class="row"><b>SHIELD</b><span id="xShd">-</span></div><div class="row"><b>VOLT</b><span id="xV">-</span></div><div class="row"><b>FREQ</b><span id="xF">-</span></div><div class="bars wide" id="xPowBars"></div></div>
+  <div class="dp dp-r dp-x pc-only pc-grow" aria-hidden="true"><div class="dp-h">LOG // STREAM</div><div id="xLog" class="xlog"></div></div>
+</aside>
+<div class="app">
+  <header class="head">
+    <div class="logo">FINERI<small>ELF FOREST</small></div>
+    <div class="sysbtns">
+      <button class="chip" type="button" id="micBtn" aria-label="声で操作"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+      <button class="chip" type="button" id="voiceBtn" aria-label="読み上げ"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg></button>
+      <button class="chip" type="button" id="toneBtn" aria-expanded="false" aria-label="ベース色">COLOR</button>
+      <button class="chip" type="button" data-open="updates" aria-label="更新履歴">v<span id="ver"></span></button>
+      <button class="chip" type="button" id="refreshBtn" aria-label="更新">↻ UPDATE</button>
+    </div>
+    <div class="tone" role="group" aria-label="ベース色" hidden></div>
+  </header>
+
+  <section class="sky" aria-label="地球と空">
+    <canvas id="sky" aria-hidden="true"></canvas>
+    <div class="dp dp-l dp-sys dp-btn" data-open="data" role="button" tabindex="0" aria-label="fineri data">
+      <div class="dp-h">SYS // FINERI-01</div>
+      <div class="row"><b>DATE</b><span id="sDate">-</span></div>
+      <div class="row"><b>SYSTEMS</b><span class="ok">ONLINE</span></div>
+      <div class="row"><b>MEMORY</b><span id="stMem">-</span></div>
+      <div class="row"><b>SKY</b><span id="stSky">-</span></div>
+      <div class="row"><b>WEATHER</b><span id="sWx">-</span></div>
+      <div class="row"><b>GUARD</b><span>MUMEI</span></div>
+    </div>
+    <button class="nu" id="nu" type="button" aria-label="fox">
+      <span class="holo"><img src="holo-nu.jpg" alt=""></span>
+      <span class="real"><img src="nu-honto.jpg" alt=""></span>
+    </button>
+    <div class="nu-say" id="nuSay"></div>
+  </section>
+
+
+  <div class="mid">
+    <div class="earth" aria-hidden="true"><canvas id="earth"></canvas></div>
+    <section class="stage" id="stage" aria-label="メニュー">
+      <canvas id="core" aria-hidden="true"></canvas>
+      <canvas id="links" aria-hidden="true"></canvas>
+      <button class="gem-btn" id="gemBtn" type="button" aria-label="相場の報告を見る"></button>
+      <div class="dp dp-l dp-mkt dp-btn" data-open="market" role="button" tabindex="0" aria-label="markets">
+        <div class="dp-h">MKT // LIVE FEED</div>
+        <div class="row" id="qBTC"><b>BTC</b><span class="p">-</span><span class="c"></span><svg class="sp" viewBox="0 0 40 10"><polyline/></svg></div>
+        <div class="row" id="qN225"><b>N225</b><span class="p">-</span><span class="c"></span><svg class="sp" viewBox="0 0 40 10"><polyline/></svg></div>
+        <div class="row" id="qKIOX"><b>KIOXIA</b><span class="p">-</span><span class="c"></span><svg class="sp" viewBox="0 0 40 10"><polyline/></svg></div>
+        <div class="row" id="qSPX"><b>SPACEX</b><span class="p">-</span><span class="c"></span><svg class="sp" viewBox="0 0 40 10"><polyline/></svg></div>
+      </div>
+      <div class="dp dp-r dp-tel" aria-hidden="true">
+        <div class="dp-h">CORE // TELEMETRY</div>
+        <div class="row"><b>FLUX</b><span id="tFlux">-</span></div>
+        <div class="row"><b>SYNAPSE</b><span id="tSyn">-</span></div>
+        <div class="row"><b>UPTIME</b><span id="tUp">-</span></div>
+        <div class="bars" id="tBars"></div>
+      </div>
+      <div class="dp dp-l dp-race dp-btn" data-open="keiba" role="button" tabindex="0" aria-label="races">
+        <div class="dp-h">TURF // NEXT WEEK</div>
+        <div id="raceList"><div class="row"><span>-</span></div></div>
+      </div>
+      <div class="dp dp-r dp-hex" aria-hidden="true">
+        <div class="dp-h">SIGNAL // 0x7E1F</div>
+        <div id="hexList"></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="info dp-flat" aria-label="clock">
+    <div class="clk"><div class="dp-h">CLOCK // JST</div><div class="t" id="time">--:--:--</div></div>
+    <div class="stat">
+      <div class="row"><b>STATUS</b><span class="ok" id="iStat">ALL NORMAL</span></div>
+      <div class="row"><b>TASKS</b><span id="iTasks">-</span></div>
+      <div class="row"><b>SUN</b><span id="date">-</span></div>
+    </div>
+    <span hidden><span id="iBtc"></span><span id="iNk"></span></span>
+  </section>
+
+  <nav class="dock" aria-label="ショートカット">
+    <span class="hub" aria-hidden="true"></span>
+    <button type="button" data-open="trade"><i><svg viewBox="0 0 24 24"><path d="M7 4v16M17 4v16"/><path d="M5 8h4v7H5zM15 6h4v6h-4z"/></svg></i>TRADE</button>
+    <button type="button" data-href="obsidian://open"><i><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.5"/><circle cx="5" cy="6" r="1.6"/><circle cx="19" cy="6" r="1.6"/><circle cx="6" cy="19" r="1.6"/><circle cx="18" cy="18" r="1.6"/><path d="M6.3 7.2l4 3.3M17.7 7.2l-3.9 3.3M7.2 17.8l3.2-3.8M16.8 16.8l-3-2.9"/></svg></i>VAULT</button>
+    <button type="button" data-href="https://x.com/home"><i><svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></svg></i>X</button>
+    <button type="button" data-open="games"><i><svg viewBox="0 0 24 24"><path d="M6 9h12a3 3 0 0 1 3 3v2a3 3 0 0 1-5.2 2L14 14h-4l-1.8 2A3 3 0 0 1 3 14v-2a3 3 0 0 1 3-3z"/><path d="M8 11v3M6.5 12.5h3M16 12h.01M18 13.5h.01"/></svg></i>GAMES</button>
+    <button type="button" id="refreshBtn2"><i><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg></i>UPDATE</button>
+    <button type="button" data-href="obsidian://open?vault=fineri-vault&amp;file=95_Panel%2Flog"><i><svg viewBox="0 0 24 24"><path d="M12 7v5l3 2"/><circle cx="12" cy="12" r="8"/></svg></i>LOG</button>
+  </nav>
+</div>
+
+<div class="veil" id="veil"></div>
+<section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <div class="sheet-head">
+    <button class="chip" type="button" id="closeBtn" aria-label="閉じる">← 戻る</button>
+    <h2 id="sheetTitle"><span class="en" id="sheetEn"></span><span id="sheetJa"></span></h2>
+  </div>
+  <canvas class="sheet-art" id="sheetArt" aria-hidden="true"></canvas>
+  <div class="sheet-body">
+
+    <div class="mod" data-mod="talk" hidden>
+      <div class="launch">
+        <img src="nu.jpg" alt="">
+        <p style="margin:0;font-size:16px">……呼んだ？ ボタンを押したら行くから。</p>
+        <a class="big" href="https://claude.ai/code/project/chan_01NB255fjZpWAUx6aa11SZ5B" target="_blank" rel="noopener">いつもの部屋で話す</a>
+        <p class="hint">このプロジェクト（記憶庫づくりの続き）が開くよ。</p>
+        <a class="big alt" href="https://claude.ai/new" target="_blank" rel="noopener">新しい会話で話す</a>
+      </div>
+    </div>
+
+    <div class="mod" data-mod="trade" hidden>
+      <div class="grid2">
+        <a class="card" id="tvLink" href="https://jp.tradingview.com/chart/" target="_blank" rel="noopener"><span class="go">CHART ↗</span><h3>TradingView</h3><p>チャート（アプリがあればアプリで開く）</p></a>
+        <a class="card" href="shortcuts://run-shortcut?name=STOCK"><span class="go">STOCK ↗</span><h3>証券</h3><p>株・投資信託</p></a>
+        <a class="card" href="shortcuts://run-shortcut?name=CRYPTO1"><span class="go">CRYPTO ↗</span><h3>取引所 1</h3><p>暗号資産</p></a>
+        <a class="card" href="shortcuts://run-shortcut?name=CRYPTO2"><span class="go">CRYPTO ↗</span><h3>取引所 2</h3><p>暗号資産</p></a>
+        <a class="card" href="shortcuts://run-shortcut?name=BANK"><span class="go">BANK ↗</span><h3>銀行</h3><p>入出金・残高</p></a>
+      </div>
+      <p class="hint" style="margin-top:12px">iPhone の「ショートカット」の STOCK / CRYPTO1 / CRYPTO2 / BANK を呼んでアプリを開くよ。</p>
+      <p class="hint">ログインはそれぞれの公式アプリでね。ここにはパスワードとか何も保存しないよ。</p>
+    </div>
+
+    <div class="mod" data-mod="market" hidden>
+      <div class="mrow"><b>BTC</b><span class="v" id="mBtc">--</span><span id="mBtcC">--</span></div>
+      <div class="mrow"><b>日経平均</b><span class="v" id="mNk">--</span><span id="mNkC">--</span></div>
+      <p class="hint" id="mNote" style="margin-bottom:14px">変化は1時間前との比較。±5%を超えると中央の水晶が光るよ（上がる=緑、下がる=赤）。</p>
+      <div class="grid2">
+        <a class="card" href="https://finance.yahoo.co.jp/" target="_blank" rel="noopener"><span class="go">OPEN ↗</span><h3>日経平均・個別株</h3><p>Yahoo!ファイナンス</p></a>
+        <a class="card" href="https://finance.yahoo.co.jp/quote/USDJPY=FX" target="_blank" rel="noopener"><span class="go">OPEN ↗</span><h3>ドル円</h3><p>為替レート</p></a>
+        <a class="card" href="https://nikkei225jp.com/" target="_blank" rel="noopener"><span class="go">OPEN ↗</span><h3>世界の株価</h3><p>NYダウ・先物など一覧</p></a>
+        <a class="card" href="https://www.nikkei.com/markets/" target="_blank" rel="noopener"><span class="go">OPEN ↗</span><h3>マーケットニュース</h3><p>日本経済新聞</p></a>
+      </div>
+      <h3 class="label section-t">無名に聞く</h3>
+      <div class="asks">
+        <a href="https://claude.ai/new?q=%E7%9B%B8%E5%A0%B4%E3%81%8C%E5%A4%A7%E3%81%8D%E3%81%8F%E4%B8%8B%E3%81%8C%E3%81%A3%E3%81%9F%E6%97%A5%E3%80%81%E3%81%BE%E3%81%9A%E4%BD%95%E3%82%92%E7%A2%BA%E8%AA%8D%E3%81%97%E3%81%9F%E3%82%89%E3%81%84%E3%81%84%EF%BC%9F" target="_blank" rel="noopener">急落した日に見ること</a>
+        <a href="https://claude.ai/new?q=%E6%97%A5%E7%B5%8C%E5%B9%B3%E5%9D%87%E3%81%A8NY%E3%83%80%E3%82%A6%E3%81%AE%E9%96%A2%E4%BF%82%E3%82%92%E3%80%81%E3%81%8B%E3%82%93%E3%81%9F%E3%82%93%E3%81%AB%E6%95%99%E3%81%88%E3%81%A6" target="_blank" rel="noopener">日経とNYの関係</a>
+        <a href="https://claude.ai/new?q=%E5%86%86%E5%AE%89%E3%81%A8%E5%86%86%E9%AB%98%E3%80%81%E6%A0%AA%E3%81%AB%E3%81%AF%E3%81%A9%E3%81%86%E5%BD%B1%E9%9F%BF%E3%81%99%E3%82%8B%E3%81%AE%EF%BC%9F" target="_blank" rel="noopener">円安・円高と株</a>
+      </div>
+      <h3 class="label section-t">相場メモ（この端末に保存）</h3>
+      <textarea class="memo" id="memo-market" placeholder="気になった銘柄、今日の動きなど"></textarea>
+    </div>
+
+    <div class="mod" data-mod="keiba" hidden>
+      <div class="pick" id="pick" hidden>
+        <div class="pick-h"><span class="pick-tag">TODAY'S PICK</span><span id="pickRace">-</span></div>
+        <div class="pick-type" id="pickType">-</div>
+        <div class="pick-horses" id="pickHorses"></div>
+        <div class="pick-sum" id="pickSum">-</div>
+        <div class="pick-roman" id="pickRoman" hidden></div>
+        <div class="pick-btns">
+          <a class="pick-buy" href="https://www.ipat.jra.go.jp/sp/" target="_blank" rel="noopener">即PATを開く ↗</a>
+          <button type="button" class="ghost" id="pickCopy">買い目をコピー</button>
+        </div>
+        <p class="hint">購入は即PATで自分で。パネルからお金は動かさないよ。</p>
+      </div>
+      <div class="grid2">
+        <a class="card" href="https://www.jra.go.jp/" target="_blank" rel="noopener"><span class="go">OPEN ↗</span><h3>JRA 公式</h3><p>今週のレース・出馬表・結果</p></a>
+        <a class="card" href="https://www.netkeiba.com/" target="_blank" rel="noopener"><span class="go">OPEN ↗</span><h3>netkeiba</h3><p>オッズ・ニュース・データ</p></a>
+        <a class="card" href="https://www.ipat.jra.go.jp/sp/" target="_blank" rel="noopener"><span class="go">OPEN ↗</span><h3>即PAT</h3><p>馬券の購入（ログインは公式で）</p></a>
+        <a class="card" href="https://www.keiba.go.jp/" target="_blank" rel="noopener"><span class="go">OPEN ↗</span><h3>地方競馬</h3><p>NAR 公式</p></a>
+        <a class="card" href="obsidian://open?vault=fineri-vault&amp;file=95_Panel%2Fd1"><span class="go">RECORD ↗</span><h3>通算成績</h3><p>メモで見る</p></a>
+      </div>
+      <h3 class="label section-t">無名に聞く</h3>
+      <div class="asks">
+        <a href="https://claude.ai/new?q=%E7%AB%B6%E9%A6%AC%E3%81%AE%E4%BA%88%E6%83%B3%E3%81%A7%E3%80%81%E3%81%BE%E3%81%9A%E8%A6%8B%E3%82%8B%E3%81%B9%E3%81%8D%E3%83%9D%E3%82%A4%E3%83%B3%E3%83%88%E3%82%923%E3%81%A4%E6%95%99%E3%81%88%E3%81%A6" target="_blank" rel="noopener">予想の見どころ</a>
+        <a href="https://claude.ai/new?q=%E5%8D%98%E5%8B%9D%E3%83%BB%E8%A4%87%E5%8B%9D%E3%83%BB%E9%A6%AC%E9%80%A3%E3%83%BB%E3%83%AF%E3%82%A4%E3%83%89%E3%83%BB%E4%B8%89%E9%80%A3%E8%A4%87%E3%81%AE%E9%81%95%E3%81%84%E3%82%92%E3%81%8B%E3%82%93%E3%81%9F%E3%82%93%E3%81%AB%E6%95%99%E3%81%88%E3%81%A6" target="_blank" rel="noopener">馬券の種類</a>
+        <a href="https://claude.ai/new?q=%E9%A6%AC%E5%A0%B4%E7%8A%B6%E6%85%8B%EF%BC%88%E8%89%AF%E3%83%BB%E7%A8%8D%E9%87%8D%E3%83%BB%E9%87%8D%E3%83%BB%E4%B8%8D%E8%89%AF%EF%BC%89%E3%81%A7%E4%BD%95%E3%81%8C%E5%A4%89%E3%82%8F%E3%82%8B%E3%81%AE%EF%BC%9F" target="_blank" rel="noopener">馬場の読み方</a>
+      </div>
+      <h3 class="label section-t">予想メモ（この端末に保存）</h3>
+      <textarea class="memo" id="memo-keiba" placeholder="気になる馬、買い目など"></textarea>
+    </div>
+
+    <div class="mod" data-mod="tasks" hidden>
+      <ul class="tasks" id="tasks"></ul>
+      <form class="addrow" id="addTask">
+        <input id="newTask" type="text" placeholder="やることを追加">
+        <button type="submit">追加</button>
+      </form>
+    </div>
+
+    <div class="mod" data-mod="memory" hidden>
+      <div class="grid2">
+        
+        <a class="card" href="obsidian://open"><span class="go">OPEN ↗</span><h3>メモ帳を開く</h3><p>Obsidian アプリ</p></a>
+        <a class="card" href="https://github.com/yosizoueri-blip/fineri-vault" target="_blank" rel="noopener"><span class="go">OPEN ↗</span><h3>記憶庫の中身</h3><p>GitHub</p></a>
+        <a class="card" href="https://github.com/yosizoueri-blip/fineri-vault/commits/main" target="_blank" rel="noopener"><span class="go">OPEN ↗</span><h3>更新の記録</h3><p>いつ何が保存されたか</p></a>
+      </div>
+    </div>
+
+    <div class="mod" data-mod="updates" hidden>
+      <div class="row" style="margin-bottom:14px">
+        <button type="button" id="refreshBtn3">↻ 最新にする</button>
+        <span class="hint">今のバージョン: v<span id="ver2"></span></span>
+      </div>
+      <h3 class="label section-t">声の切り替え</h3>
+      <div class="row voice-pick" style="margin-bottom:16px"><button class="ghost" type="button" data-voice="mumei">無名</button><button class="ghost" type="button" data-voice="low">低い声</button></div>
+      <h3 class="label section-t">水晶のテスト</h3>
+      <div class="row" style="margin-bottom:16px">
+        <button class="ghost" type="button" data-test="up">緑</button>
+        <button class="ghost" type="button" data-test="down">赤</button>
+        <button class="ghost" type="button" data-test="split">半分ずつ</button>
+        <button class="ghost" type="button" data-test="report">黒（報告）</button>
+        <button class="ghost" type="button" data-test="">戻す</button>
+      </div>
+      <h3 class="label section-t">更新履歴</h3>
+      <div class="grid2"><a class="card" href="obsidian://open?vault=fineri-vault&amp;file=95_Panel%2Flog"><span class="go">LOG ↗</span><h3>更新履歴を見る</h3><p>メモ帳で開く</p></a></div>
+    </div>
+
+    <div class="mod" data-mod="data" hidden>
+      <div class="notes" id="notes" hidden><h3 class="label section-t" style="margin-top:0">通知一覧</h3><div id="noteList"></div></div>
+      <p class="hint" style="margin-bottom:14px">押すとメモ帳が開くよ。中身はメモ帳の中だけ。</p>
+      <div class="grid2">
+        <a class="card" href="obsidian://open?vault=fineri-vault&amp;file=95_Panel%2Fd1"><span class="go">KEIBA ↗</span><h3>競馬</h3></a>
+        <a class="card" href="obsidian://open?vault=fineri-vault&amp;file=95_Panel%2Fd2"><span class="go">ASSET ↗</span><h3>資産</h3></a>
+        <a class="card" href="obsidian://open?vault=fineri-vault&amp;file=95_Panel%2Fd3"><span class="go">REPORT ↗</span><h3>相場の報告</h3></a>
+        <a class="card" href="obsidian://open?vault=fineri-vault&amp;file=95_Panel%2Fd4"><span class="go">HISTORY ↗</span><h3>投資</h3></a>
+        <a class="card" href="obsidian://open?vault=fineri-vault&amp;file=95_Panel%2Fd5"><span class="go">PLAY ↗</span><h3>トレード</h3></a>
+        <a class="card" href="obsidian://open?vault=fineri-vault&amp;file=95_Panel%2Fd6"><span class="go">STOCK ↗</span><h3>証券</h3></a>
+        <a class="card" href="obsidian://open?vault=fineri-vault&amp;file=95_Panel%2Fd7"><span class="go">TAX ↗</span><h3>税金</h3></a>
+        <a class="card" href="obsidian://open?vault=fineri-vault&amp;file=95_Panel%2Fd8"><span class="go">BOOK ↗</span><h3>出納帳</h3></a>
+      </div>
+    </div>
+    </div>
+
+    <div class="mod" data-mod="help" hidden>
+      <p class="hint" style="margin-bottom:14px">見つけたね。ここはシークレットの取扱説明書。忘れたら地球を押して。</p>
+        <div class="mrow"><b>地球</b><span>この「使い方」が開く（シークレット）</span></div>
+        <div class="mrow"><b>緑に光る点</b><span>いま作業中のところ</span></div>
+        <div class="mrow"><b>顔のおでこ</b><span>省エネモード。動きが止まってシナプスが青になる。もう一回で元通り</span></div>
+        <div class="mrow"><b>真ん中の宝石が黒い</b><span>相場の定期報告が来た合図。押すと報告のメモが開く</span></div>
+        <div class="mrow"><b>左上の SYS パネル</b><span>通知一覧とデータの入口</span></div>
+        <div class="mrow"><b>SYS が金色・STATUS が NOTICE</b><span>通知の日が14日以内に近づいた合図</span></div>
+        <div class="mrow"><b>MKT パネル</b><span>相場の画面</span></div>
+        <div class="mrow"><b>TURF パネル</b><span>競馬の画面</span></div>
+        <div class="mrow"><b>左上の狐</b><span>押すと少しのあいだ本当の姿になる</span></div>
+        <div class="mrow"><b>右上のマイク</b><span>声で操作（「相場」「競馬」「データ」「使い方」など）</span></div>
+        <div class="mrow"><b>右上のスピーカー</b><span>読み上げ。押すたびに 無名(M) ⇔ 低い声(L)</span></div>
+        <div class="mrow"><b>COLOR</b><span>パネルの色を変える</span></div>
+        <div class="mrow"><b>UPDATE</b><span>最新版に更新。新しい機能が出たら最初にこれ</span></div>
+        <div class="mrow"><b>LOG</b><span>更新履歴のメモが直接開く</span></div>
+        <div class="mrow"><b>v3.xx</b><span>最新にする・声の切り替え・水晶のテスト</span></div>
+        <div class="mrow"><b>TRADE</b><span>TradingView・証券・取引所・銀行アプリを開く</span></div>
+        <div class="mrow"><b>VAULT</b><span>メモ帳（Obsidian）を開く</span></div>
+    </div>
+
+    <div class="mod" data-mod="games" hidden>
+      <p class="hint" style="margin-bottom:14px">ここはこれから育てる場所。配信やプレイ記録をまとめていくよ。</p>
+      <div class="grid2">
+        <div class="card"><span class="go">COMING SOON</span><h3>MINECRAFT</h3><p>建築・壁画・ワールド記録</p></div>
+        <div class="card"><span class="go">COMING SOON</span><h3>NIOH SERIES</h3><p>仁王シリーズ</p></div>
+        <div class="card"><span class="go">COMING SOON</span><h3>ELDEN RING</h3><p>エルデンリング</p></div>
+        <div class="card"><span class="go">COMING SOON</span><h3>DEATH STRANDING</h3><p>デス・ストランディング</p></div>
+      </div>
+    </div>
+
+    <div class="mod" data-mod="forest" hidden>
+      <div class="crew">
+        <div class="card"><img src="nu.jpg" alt="ぬーちゃん（チビ姿）"><h3>ぬーちゃん</h3><p>白い狐の霊獣。ふだんはチビ姿</p></div>
+        <div class="card"><img src="nu-honto.jpg" alt="ぬーちゃん（本当の姿）"><h3>ぬーちゃん（本当の姿）</h3><p>九尾。水晶の白蛇と一緒</p></div>
+        <div class="card"><h3>fineri</h3><p>この森の主</p></div>
+        <div class="card"><h3>fin</h3><p>ハイエルフ</p></div>
+        <div class="card"><h3>無名</h3><p>相棒。素直じゃない</p></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<script src="app.js?v=3.52"></script>
+</body>
+</html>
