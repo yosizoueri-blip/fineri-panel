@@ -1,7 +1,7 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '3.53';
+  const VERSION = '3.54';
   // the change log lives in the private vault (50_Knowledge/panel-log.md); the LOG button opens it there
 
   const load = (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } };
