@@ -1,7 +1,7 @@
 /* FINERI v2 — ARC CORE */
 (function () {
   'use strict';
-  const VERSION = '3.54';
+  const VERSION = '3.55';
   // the change log lives in the private vault (50_Knowledge/panel-log.md); the LOG button opens it there
 
   const load = (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } };
@@ -795,7 +795,7 @@
         [/無名の声|むめいの声|ムメイの声|声.*戻/, () => { window.fineriSetVoice && window.fineriSetVoice('mumei'); say('無名だよ。また私がしゃべるね。'); }],
         [/閉じ|戻っ|もどっ|ホーム/, () => closeMod()],
         [/読み上げ|報告|ブリーフィング|状況|教えて/, () => $('voiceBtn') && $('voiceBtn').click()],
-        [/トレード|取引|チャート/, 'trade'], [/マーケット|相場|株|ビットコイン|日経/, 'market'],
+        [/トレード|取引|チャート/, 'market'], [/マーケット|相場|株|ビットコイン|日経/, 'market'],
         [/競馬|レース|けいば|重賞|レーシング/, 'keiba'], [/タスク|やること|予定/, 'tasks'],
         [/メモリー|記憶|メモ/, 'memory'], [/フォレスト|森/, 'forest'], [/むめい|無名|ムメイ|話/, 'talk'],
         [/データ/, 'data'], [/使い方|ヘルプ/, 'help'], [/ゲーム/, 'games'], [/更新|アップデート|履歴/, 'updates'],
